@@ -1,15 +1,16 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-console.log('Connecting to:', process.env.DATABASE_URL ? 'URL found' : 'NO URL');
-
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
+  connectionTimeoutMillis: 5000,
+  idleTimeoutMillis: 30000,
+  max: 10,
 });
 
-pool.on('error', (err) => {
-  console.error('DB error:', err.message);
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err.message);
 });
 
 pool.connect()
