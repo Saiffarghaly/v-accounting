@@ -1,9 +1,11 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
+const connectionString = process.env.DATABASE_URL;
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+  connectionString,
+  ssl: false,
 });
 
 pool.on('error', (err) => {
@@ -11,7 +13,10 @@ pool.on('error', (err) => {
 });
 
 pool.connect()
-  .then(() => console.log('✅ Database connected successfully'))
+  .then(client => {
+    console.log('✅ Database connected successfully');
+    client.release();
+  })
   .catch((err) => console.error('❌ Database connection error:', err));
 
 module.exports = pool;
