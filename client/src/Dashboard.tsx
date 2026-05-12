@@ -26,7 +26,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get("${API_URL}/api/stats", {
+        const res = await axios.get("https://v-accounting-production.up.railway.app/api/stats", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setStats(res.data);
@@ -166,8 +166,7 @@ const Dashboard = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-400">صافي الربح</span>
                     <span className={`font-bold ${(stats?.profit || 0) >= 0 ? "text-green-400" : "text-red-400"}`}>
-                      {stats?.profit.toLocaleString() || 0} ج
-                    </span>
+{                     stats?.profit ? Number(stats.profit).toLocaleString() : 0} ج                       </span>
                   </div>
                 </div>
               </div>
