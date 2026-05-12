@@ -22,7 +22,7 @@ const Clients = () => {
 
   const fetchClients = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/clients", { headers });
+      const res = await axios.get("https://v-accounting-production.up.railway.app/api/clients", { headers });
       setClients(res.data);
     } catch (err) { console.error(err); }
   };
@@ -33,7 +33,7 @@ const Clients = () => {
     if (!form.name) return;
     setLoading(true);
     try {
-      await axios.post("http://localhost:5000/api/clients", form, { headers });
+      await axios.post("https://v-accounting-production.up.railway.app/api/clients", form, { headers });
       setForm({ name: "", email: "", phone: "", address: "" });
       setShowForm(false);
       fetchClients();
@@ -43,7 +43,7 @@ const Clients = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`http://localhost:5000/api/clients/${id}`, { headers });
+      await axios.delete(`https://v-accounting-production.up.railway.app/api/clients/${id}`, { headers });
       fetchClients();
     } catch (err) { console.error(err); }
   };

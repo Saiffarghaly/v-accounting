@@ -34,7 +34,7 @@ const Users = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/users", { headers });
+      const res = await axios.get("https://v-accounting-production.up.railway.app/api/users", { headers });
       setUsers(res.data);
     } catch (err) {
       console.error(err);
@@ -48,7 +48,7 @@ const Users = () => {
     setLoading(true);
     setError("");
     try {
-      await axios.post("http://localhost:5000/api/users", form, { headers });
+      await axios.post("https://v-accounting-production.up.railway.app/api/users", form, { headers });
       setForm({ name: "", email: "", password: "", role: "accountant" });
       setShowForm(false);
       fetchUsers();
@@ -61,7 +61,7 @@ const Users = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`http://localhost:5000/api/users/${id}`, { headers });
+      await axios.delete(`https://v-accounting-production.up.railway.app/api/users/${id}`, { headers });
       fetchUsers();
     } catch (err) {
       console.error(err);

@@ -94,7 +94,7 @@ const ImportExcel = () => {
             date: mapping.date ? String(row[mapping.date] || new Date().toISOString().split("T")[0]) : new Date().toISOString().split("T")[0],
           };
           if (body.amount <= 0) continue;
-          endpoint = "http://localhost:5000/api/transactions";
+          endpoint = "${API_URL}/api/transactions";
         } else if (destination === "clients") {
           body = {
             name: mapping.name ? String(row[mapping.name] || "") : "",
@@ -103,7 +103,7 @@ const ImportExcel = () => {
             address: mapping.address ? String(row[mapping.address] || "") : "",
           };
           if (!body.name) continue;
-          endpoint = "http://localhost:5000/api/clients";
+          endpoint = "${API_URL}/api/clients";
         } else if (destination === "inventory") {
           body = {
             name: mapping.name ? String(row[mapping.name] || "") : "",
@@ -116,7 +116,7 @@ const ImportExcel = () => {
             min_quantity: 5,
           };
           if (!body.name) continue;
-          endpoint = "http://localhost:5000/api/inventory";
+          endpoint = "${API_URL}/api/inventory";
         }
 
         await axios.post(endpoint, body, { headers });

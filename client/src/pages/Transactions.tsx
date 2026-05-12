@@ -31,7 +31,7 @@ const Transactions = () => {
 
   const fetchTransactions = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/transactions", { headers });
+      const res = await axios.get("https://v-accounting-production.up.railway.app/api/transactions", { headers });
       setTransactions(res.data);
     } catch (err) {
       console.error(err);
@@ -46,7 +46,7 @@ const Transactions = () => {
     if (!form.amount || !form.description) return;
     setLoading(true);
     try {
-      await axios.post("http://localhost:5000/api/transactions", form, { headers });
+      await axios.post("https://v-accounting-production.up.railway.app/api/transactions", form, { headers });
       setForm({ amount: "", type: "إيراد", category: "مبيعات", description: "", date: new Date().toISOString().split("T")[0] });
       setShowForm(false);
       fetchTransactions();
@@ -59,7 +59,7 @@ const Transactions = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`http://localhost:5000/api/transactions/${id}`, { headers });
+      await axios.delete(`https://v-accounting-production.up.railway.app/api/transactions/${id}`, { headers });
       fetchTransactions();
     } catch (err) {
       console.error(err);

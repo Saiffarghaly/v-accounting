@@ -31,14 +31,14 @@ const Invoices = () => {
 
   const fetchInvoices = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/invoices", { headers });
+      const res = await axios.get("https://v-accounting-production.up.railway.app/api/invoices", { headers });
       setInvoices(res.data);
     } catch (err) { console.error(err); }
   };
 
   const fetchClients = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/clients", { headers });
+      const res = await axios.get("https://v-accounting-production.up.railway.app/api/clients", { headers });
       setClients(res.data);
     } catch (err) { console.error(err); }
   };
@@ -49,7 +49,7 @@ const Invoices = () => {
     if (!form.client_id || !form.amount) return;
     setLoading(true);
     try {
-      await axios.post("http://localhost:5000/api/invoices", form, { headers });
+      await axios.post("https://v-accounting-production.up.railway.app/api/invoices", form, { headers });
       setForm({ client_id: "", amount: "", status: "pending", due_date: "" });
       setShowForm(false);
       fetchInvoices();
@@ -59,14 +59,14 @@ const Invoices = () => {
 
   const handleStatusChange = async (id: number, status: string) => {
     try {
-      await axios.patch(`http://localhost:5000/api/invoices/${id}`, { status }, { headers });
+      await axios.patch(`https://v-accounting-production.up.railway.app/api/invoices/${id}`, { status }, { headers });
       fetchInvoices();
     } catch (err) { console.error(err); }
   };
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`http://localhost:5000/api/invoices/${id}`, { headers });
+      await axios.delete(`https://v-accounting-production.up.railway.app/api/invoices/${id}`, { headers });
       fetchInvoices();
     } catch (err) { console.error(err); }
   };
