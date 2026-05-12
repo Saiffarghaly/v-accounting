@@ -13,7 +13,7 @@ const Login = ({ onSwitch }: { onSwitch: () => void }) => {
     setLoading(true);
     setError("");
     try {
-      const res = await axios.post("${API_URL}/api/auth/login", {
+      const res = await axios.post("https://v-accounting-production.up.railway.app/api/auth/login", {
         email,
         password,
       });
