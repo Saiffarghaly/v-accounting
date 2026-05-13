@@ -155,7 +155,7 @@ const Landing = ({
             },
             {
               name: "احترافي",
-              price: "5,000",
+              price: "0",
               color: "border-[#217346]",
               features: [
                 "مكاتب غير محدودة",
