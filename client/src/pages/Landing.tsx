@@ -1,20 +1,20 @@
 const Landing = ({ onLogin, onRegister }: { onLogin: () => void; onRegister: () => void }) => {
   return (
-    <div className="min-h-screen bg-[#0a1628] text-white">
+    <div className="min-h-screen bg-gray-100 text-gray-900">
 
       {/* Navbar */}
-      <nav className="border-b border-gray-800 px-8 py-4 flex items-center justify-between">
+      <nav className="border-b border-gray-300 px-8 py-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-amber-400">💼 V-ACCOUNTING</h1>
         <div className="flex items-center gap-4">
           <button
             onClick={onLogin}
-            className="text-gray-400 hover:text-white text-sm transition"
+            className="text-gray-400 hover:text-gray-900 text-sm transition"
           >
             تسجيل الدخول
           </button>
           <button
             onClick={onRegister}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition"
+            className="bg-blue-600 hover:bg-blue-700 text-gray-900 text-sm px-4 py-2 rounded-lg transition"
           >
             ابدأ مجاناً
           </button>
@@ -37,7 +37,7 @@ const Landing = ({ onLogin, onRegister }: { onLogin: () => void; onRegister: () 
         <div className="flex items-center justify-center gap-4">
           <button
             onClick={onRegister}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-medium transition"
+            className="bg-blue-600 hover:bg-blue-700 text-gray-900 px-8 py-4 rounded-xl text-lg font-medium transition"
           >
             ابدأ مجاناً الآن
           </button>
@@ -63,7 +63,7 @@ const Landing = ({ onLogin, onRegister }: { onLogin: () => void; onRegister: () 
             { icon: "💰", title: "الإيرادات والمصروفات", desc: "سجل كل معاملة مالية وصنفها وتابع صافي الربح" },
             { icon: "🔐", title: "Multi-tenant", desc: "كل مكتب له بيانات خاصة — مفيش مكتب يشوف بيانات مكتب تاني" },
           ].map((f, i) => (
-            <div key={i} className="bg-[#1a2840]border border-gray-800 rounded-xl p-6 hover:border-blue-500/50 transition">
+            <div key={i} className="bg-whiteborder border-gray-300 rounded-xl p-6 hover:border-blue-500/50 transition">
               <p className="text-3xl mb-4">{f.icon}</p>
               <h4 className="font-bold text-lg mb-2">{f.title}</h4>
               <p className="text-gray-400 text-sm">{f.desc}</p>
@@ -97,9 +97,9 @@ const Landing = ({ onLogin, onRegister }: { onLogin: () => void; onRegister: () 
               highlight: true,
             },
           ].map((plan, i) => (
-            <div key={i} className={`bg-[#1a2840]border-2 ${plan.color} rounded-xl p-8 ${plan.highlight ? "relative" : ""}`}>
+            <div key={i} className={`bg-whiteborder-2 ${plan.color} rounded-xl p-8 ${plan.highlight ? "relative" : ""}`}>
               {plan.highlight && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs px-4 py-1 rounded-full">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-gray-900 text-xs px-4 py-1 rounded-full">
                   الأكثر شيوعاً
                 </div>
               )}
@@ -119,7 +119,7 @@ const Landing = ({ onLogin, onRegister }: { onLogin: () => void; onRegister: () 
                 onClick={plan.action}
                 className={`w-full py-3 rounded-lg font-medium transition ${
                   plan.highlight
-                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    ? "bg-blue-600 hover:bg-blue-700 text-gray-900"
                     : "border border-gray-700 hover:border-gray-500 text-gray-300"
                 }`}
               >
@@ -137,7 +137,7 @@ const Landing = ({ onLogin, onRegister }: { onLogin: () => void; onRegister: () 
           <p className="text-gray-400 mb-8">سجل مكتبك الآن وابدأ إدارة محاسبتك بشكل احترافي</p>
           <button
             onClick={onRegister}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl text-lg font-medium transition"
+            className="bg-blue-600 hover:bg-blue-700 text-gray-900 px-10 py-4 rounded-xl text-lg font-medium transition"
           >
             أنشئ مكتبك مجاناً
           </button>
@@ -145,7 +145,7 @@ const Landing = ({ onLogin, onRegister }: { onLogin: () => void; onRegister: () 
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-800 py-8 px-8 text-center text-gray-600 text-sm">
+      <footer className="border-t border-gray-300 py-8 px-8 text-center text-gray-600 text-sm">
         <p>© 2026 V-ACCOUNTING — جميع الحقوق محفوظة</p>
       </footer>
 
