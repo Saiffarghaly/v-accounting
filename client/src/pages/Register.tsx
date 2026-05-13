@@ -22,81 +22,85 @@ const Register = ({ onSwitch }: { onSwitch: () => void }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a1628] flex items-center justify-center">
-      <div className="bg-[#1a2840] border border-gray-800 rounded-2xl p-8 w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: "#f5f5f5" }}>
+      <div className="rounded-2xl p-8 w-full max-w-md border" style={{ background: "#ffffff", borderColor: "#e0e0e0" }}>
 
-        {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-amber-400">💼 V-ACCOUNTING</h1>
-          <p className="text-gray-500 mt-2">سجل مكتبك الآن</p>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded flex items-center justify-center text-white font-bold text-sm" style={{ background: "#217346" }}>V</div>
+            <h1 className="text-2xl font-bold" style={{ color: "#217346" }}>V-ACCOUNTING</h1>
+          </div>
+          <p className="text-sm" style={{ color: "#888" }}>سجل مكتبك الآن</p>
         </div>
 
-        {/* Error */}
         {error && (
-          <div className="bg-red-400/10 border border-red-400/20 text-red-400 text-sm rounded-lg px-4 py-3 mb-4">
+          <div className="text-sm rounded-lg px-4 py-3 mb-4" style={{ background: "#ffebee", color: "#c62828", border: "1px solid #ffcdd2" }}>
             {error}
           </div>
         )}
 
-        {/* Form */}
         <div className="space-y-4">
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">اسم المكتب</label>
+            <label className="text-sm mb-1 block" style={{ color: "#555" }}>اسم المكتب</label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="مكتب سيف للمحاسبة"
-              className="w-full bg-[#0f1f3d] border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500 transition"
+              className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none transition"
+              style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }}
             />
           </div>
 
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">البريد الإلكتروني</label>
+            <label className="text-sm mb-1 block" style={{ color: "#555" }}>البريد الإلكتروني</label>
             <input
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               placeholder="example@email.com"
-              className="w-full bg-[#0f1f3d] border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500 transition"
+              className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none transition"
+              style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }}
             />
           </div>
 
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">رقم الموبايل</label>
+            <label className="text-sm mb-1 block" style={{ color: "#555" }}>رقم الموبايل</label>
             <input
               type="tel"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
               placeholder="01000000000"
-              className="w-full bg-[#0f1f3d] border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500 transition"
+              className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none transition"
+              style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }}
             />
           </div>
 
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">كلمة المرور</label>
+            <label className="text-sm mb-1 block" style={{ color: "#555" }}>كلمة المرور</label>
             <input
               type="password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               placeholder="••••••••"
-              className="w-full bg-[#0f1f3d] border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500 transition"
+              className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none transition"
+              style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }}
             />
           </div>
 
           <button
             onClick={handleRegister}
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-3 rounded-lg transition"
+            className="w-full text-white font-medium py-3 rounded-lg transition"
+            style={{ background: loading ? "#81c784" : "#217346" }}
           >
             {loading ? "جاري التسجيل..." : "إنشاء المكتب"}
           </button>
         </div>
 
-        {/* Switch */}
-        <p className="text-center text-gray-500 text-sm mt-6">
+        <p className="text-center text-sm mt-6" style={{ color: "#888" }}>
           عندك حساب؟{" "}
-          <button onClick={onSwitch} className="text-amber-400 hover:underline">
+          <button onClick={onSwitch} className="font-medium hover:underline" style={{ color: "#217346" }}>
             سجل دخولك
           </button>
         </p>
