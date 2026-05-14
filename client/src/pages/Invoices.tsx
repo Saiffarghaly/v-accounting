@@ -20,7 +20,7 @@ interface Client {
 }
 
 const Invoices = () => {
-  const { token } = useAuth();
+  const { token, canEdit, canDelete } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -147,6 +147,12 @@ const Invoices = () => {
     return "bg-yellow-400/10 text-yellow-400";
   };
 
+  const statusLabel = (status: string) => {
+    if (status === "paid") return "مدفوع";
+    if (status === "overdue") return "متأخر";
+    return "معلق";
+  };
+
   const total = invoices.reduce((s, i) => s + Number(i.amount), 0);
   const paid = invoices.filter(i => i.status === "paid").reduce((s, i) => s + Number(i.amount), 0);
   const pending = invoices.filter(i => i.status === "pending").reduce((s, i) => s + Number(i.amount), 0);
@@ -179,14 +185,16 @@ const Invoices = () => {
             className="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg transition">
             تصدير Excel ⬇
           </button>
-          <button onClick={() => setShowForm(!showForm)}
-            className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg transition">
+          {canEdit && (
+            <button onClick={() => setShowForm(!showForm)}
+              className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg transition">
             + فاتورة جديدة
-          </button>
+            </button>
+          )}
         </div>
       </div>
 
-      {showForm && (
+      {canEdit && showForm && (
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
           <h4 className="font-medium text-gray-300">فاتورة جديدة</h4>
           <div className="grid grid-cols-2 gap-4">
@@ -258,18 +266,26 @@ const Invoices = () => {
                   <td className="py-3">{Number(inv.amount).toLocaleString()} ج</td>
                   <td className="py-3 text-gray-500">{inv.due_date ? new Date(inv.due_date).toLocaleDateString('ar-EG') : "—"}</td>
                   <td className="py-3">
-                    <select value={inv.status} onChange={(e) => handleStatusChange(inv.id, e.target.value)}
-                      className={`text-xs px-2 py-1 rounded-full border-0 cursor-pointer ${statusColor(inv.status)}`}>
-                      <option value="pending">معلق</option>
-                      <option value="paid">مدفوع</option>
-                      <option value="overdue">متأخر</option>
-                    </select>
+                    {canEdit ? (
+                      <select value={inv.status} onChange={(e) => handleStatusChange(inv.id, e.target.value)}
+                        className={`text-xs px-2 py-1 rounded-full border-0 cursor-pointer ${statusColor(inv.status)}`}>
+                        <option value="pending">معلق</option>
+                        <option value="paid">مدفوع</option>
+                        <option value="overdue">متأخر</option>
+                      </select>
+                    ) : (
+                      <span className={`text-xs px-2 py-1 rounded-full ${statusColor(inv.status)}`}>
+                        {statusLabel(inv.status)}
+                      </span>
+                    )}
                   </td>
                   <td className="py-3 flex gap-3">
                     <button onClick={() => exportPDF(inv)}
                       className="text-gray-600 hover:text-amber-400 transition text-xs">PDF</button>
-                    <button onClick={() => handleDelete(inv.id)}
+                    {canDelete && (
+                      <button onClick={() => handleDelete(inv.id)}
                       className="text-gray-600 hover:text-red-400 transition text-xs">حذف</button>
+                    )}
                   </td>
                 </tr>
               ))}

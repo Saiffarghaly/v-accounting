@@ -12,7 +12,7 @@ interface Client {
 }
 
 const Clients = () => {
-  const { token } = useAuth();
+  const { token, canEdit, canDelete } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -71,14 +71,16 @@ const Clients = () => {
             className="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg transition">
             تصدير Excel ⬇
           </button>
-          <button onClick={() => setShowForm(!showForm)}
-            className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg transition">
+          {canEdit && (
+            <button onClick={() => setShowForm(!showForm)}
+              className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg transition">
             + إضافة عميل
-          </button>
+            </button>
+          )}
         </div>
       </div>
 
-      {showForm && (
+      {canEdit && showForm && (
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
           <h4 className="font-medium text-gray-300">عميل جديد</h4>
           <div className="grid grid-cols-2 gap-4">
@@ -136,10 +138,12 @@ const Clients = () => {
                   </div>
                   <p className="font-medium">{client.name}</p>
                 </div>
-                <button onClick={() => handleDelete(client.id)}
-                  className="text-gray-600 hover:text-red-400 transition text-xs">
+                {canDelete && (
+                  <button onClick={() => handleDelete(client.id)}
+                    className="text-gray-600 hover:text-red-400 transition text-xs">
                   حذف
-                </button>
+                  </button>
+                )}
               </div>
               {client.email && <p className="text-sm text-gray-500">📧 {client.email}</p>}
               {client.phone && <p className="text-sm text-gray-500">📞 {client.phone}</p>}

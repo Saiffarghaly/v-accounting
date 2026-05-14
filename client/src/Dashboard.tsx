@@ -19,7 +19,7 @@ interface Stats {
 }
 
 const Dashboard = () => {
-  const { office, logout, token } = useAuth();
+  const { office, logout, token, canManageUsers } = useAuth();
   const [activePage, setActivePage] = useState("dashboard");
   const [stats, setStats] = useState<Stats | null>(null);
 
@@ -36,6 +36,12 @@ const Dashboard = () => {
     };
     if (activePage === "dashboard") fetchStats();
   }, [activePage]);
+
+  useEffect(() => {
+    if (activePage === "users" && !canManageUsers) {
+      setActivePage("dashboard");
+    }
+  }, [activePage, canManageUsers]);
 
   return (
     <div className="flex h-screen bg-gray-100 text-gray-900">
@@ -58,7 +64,7 @@ const Dashboard = () => {
             { id: "users", label: "المستخدمون", icon: "👤" },
             { id: "inventory", label: "المخزن", icon: "📦" },
             { id: "reports", label: "التقارير", icon: "📈" },
-          ].map((item) => (
+          ].filter((item) => item.id !== "users" || canManageUsers).map((item) => (
             <button
               key={item.id}
               onClick={() => setActivePage(item.id)}
@@ -244,7 +250,7 @@ const Dashboard = () => {
         {activePage === "clients" && <Clients />}
         {activePage === "invoices" && <Invoices />}
         {activePage === "import" && <ImportExcel />}
-        {activePage === "users" && <Users />}
+        {canManageUsers && activePage === "users" && <Users />}
         {activePage === "inventory" && <Inventory />}
 
         {activePage !== "dashboard" && activePage !== "income" && activePage !== "expenses" && activePage !== "clients" && activePage !== "invoices" && activePage !== "import" && activePage !== "users" && activePage !== "inventory" && (

@@ -33,7 +33,7 @@ interface Damage {
 }
 
 const Inventory = () => {
-  const { token } = useAuth();
+  const { token, canEdit, canDelete } = useAuth();
   const [tab, setTab] = useState<"items" | "returns" | "damages">("items");
   const [items, setItems] = useState<Item[]>([]);
   const [returns, setReturns] = useState<Return[]>([]);
@@ -190,13 +190,15 @@ const Inventory = () => {
               className="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg transition">
               تصدير Excel ⬇
             </button>
-            <button onClick={() => setShowForm(!showForm)}
-              className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg transition">
+            {canEdit && (
+              <button onClick={() => setShowForm(!showForm)}
+                className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg transition">
               + إضافة صنف
-            </button>
+              </button>
+            )}
           </div>
 
-          {showForm && (
+          {canEdit && showForm && (
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
               <h4 className="font-medium text-gray-300">صنف جديد</h4>
               <div className="grid grid-cols-3 gap-4">
@@ -267,8 +269,10 @@ const Inventory = () => {
                         </span>
                       </td>
                       <td className="py-3">
-                        <button onClick={() => handleDelete(item.id)}
+                        {canDelete && (
+                          <button onClick={() => handleDelete(item.id)}
                           className="text-gray-600 hover:text-red-400 transition text-xs">حذف</button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -281,14 +285,16 @@ const Inventory = () => {
 
       {tab === "returns" && (
         <div className="space-y-4">
-          <div className="flex justify-end">
-            <button onClick={() => setShowReturnForm(!showReturnForm)}
-              className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg transition">
+          {canEdit && (
+            <div className="flex justify-end">
+              <button onClick={() => setShowReturnForm(!showReturnForm)}
+                className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg transition">
               + تسجيل مرتجع
-            </button>
-          </div>
+              </button>
+            </div>
+          )}
 
-          {showReturnForm && (
+          {canEdit && showReturnForm && (
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
               <h4 className="font-medium text-gray-300">مرتجع جديد</h4>
               <div className="grid grid-cols-2 gap-4">
@@ -370,14 +376,16 @@ const Inventory = () => {
 
       {tab === "damages" && (
         <div className="space-y-4">
-          <div className="flex justify-end">
-            <button onClick={() => setShowDamageForm(!showDamageForm)}
-              className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-lg transition">
+          {canEdit && (
+            <div className="flex justify-end">
+              <button onClick={() => setShowDamageForm(!showDamageForm)}
+                className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-lg transition">
               + تسجيل هالك
-            </button>
-          </div>
+              </button>
+            </div>
+          )}
 
-          {showDamageForm && (
+          {canEdit && showDamageForm && (
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
               <h4 className="font-medium text-gray-300">تسجيل هالك</h4>
               <div className="grid grid-cols-2 gap-4">
