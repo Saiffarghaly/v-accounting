@@ -88,6 +88,17 @@ CREATE TABLE IF NOT EXISTS inventory_damages (
   date DATE DEFAULT CURRENT_DATE,
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS treasury_movements (
+  id SERIAL PRIMARY KEY,
+  office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  type VARCHAR(20) NOT NULL CHECK (type IN ('deposit', 'withdraw')),
+  source VARCHAR(30) NOT NULL CHECK (source IN ('cash', 'vodafone_cash', 'instapay')),
+  amount DECIMAL(12,2) NOT NULL CHECK (amount > 0),
+  description TEXT,
+  date DATE DEFAULT CURRENT_DATE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
     `);
 
     console.log('✅ All tables created successfully!');

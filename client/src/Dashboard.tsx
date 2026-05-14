@@ -7,6 +7,7 @@ import axios from "axios";
 import ImportExcel from "./pages/ImportExcel";
 import Users from "./pages/Users";
 import Inventory from "./pages/Inventory";
+import Treasury from "./pages/Treasury";
 
 interface Stats {
   income: number;
@@ -61,6 +62,7 @@ const Dashboard = () => {
             { id: "invoices", label: "الفواتير", icon: "🧾" },
             { id: "import", label: "استيراد Excel", icon: "📁" },
             { id: "clients", label: "العملاء", icon: "👥" },
+            { id: "treasury", label: "الخزنة", icon: "💳" },
             { id: "users", label: "المستخدمون", icon: "👤" },
             { id: "inventory", label: "المخزن", icon: "📦" },
             { id: "reports", label: "التقارير", icon: "📈" },
@@ -117,6 +119,7 @@ const Dashboard = () => {
             {activePage === "clients" && "العملاء"}
             {activePage === "reports" && "التقارير"}
             {activePage === "import" && "استيراد Excel"}
+            {activePage === "treasury" && "الخزنة"}
             {activePage === "users" && "المستخدمون"}
             {activePage === "inventory" && "المخزن"}
           </h2>
@@ -250,10 +253,11 @@ const Dashboard = () => {
         {activePage === "clients" && <Clients />}
         {activePage === "invoices" && <Invoices />}
         {activePage === "import" && <ImportExcel />}
+        {activePage === "treasury" && <Treasury />}
         {canManageUsers && activePage === "users" && <Users />}
         {activePage === "inventory" && <Inventory />}
 
-        {activePage !== "dashboard" && activePage !== "income" && activePage !== "expenses" && activePage !== "clients" && activePage !== "invoices" && activePage !== "import" && activePage !== "users" && activePage !== "inventory" && (
+        {activePage !== "dashboard" && activePage !== "income" && activePage !== "expenses" && activePage !== "clients" && activePage !== "invoices" && activePage !== "import" && activePage !== "treasury" && activePage !== "users" && activePage !== "inventory" && (
           <div className="flex items-center justify-center h-full" style={{ color: "#bbb" }}>
             <div className="text-center">
               <p className="text-4xl mb-3">🚧</p>
