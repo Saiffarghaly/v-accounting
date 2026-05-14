@@ -235,52 +235,54 @@ const Treasury = () => {
             <p>لا توجد حركات خزنة بعد</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
-                <th className="text-right pb-3" style={{ color: "#888" }}>النوع</th>
-                <th className="text-right pb-3" style={{ color: "#888" }}>المصدر</th>
-                <th className="text-right pb-3" style={{ color: "#888" }}>البيان</th>
-                <th className="text-right pb-3" style={{ color: "#888" }}>التاريخ</th>
-                <th className="text-right pb-3" style={{ color: "#888" }}>المبلغ</th>
-                <th className="text-right pb-3" style={{ color: "#888" }}>بواسطة</th>
-                <th className="text-right pb-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {movements.map((movement) => (
-                <tr key={movement.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                  <td className="py-3">
-                    <span className="text-xs px-2 py-1 rounded-full"
-                      style={{
-                        background: movement.type === "deposit" ? "#e8f5e9" : "#ffebee",
-                        color: movement.type === "deposit" ? "#217346" : "#c62828",
-                      }}>
-                      {movement.type === "deposit" ? "إيداع" : "سحب"}
-                    </span>
-                  </td>
-                  <td className="py-3" style={{ color: sourceColors[movement.source] }}>{sourceLabels[movement.source]}</td>
-                  <td className="py-3" style={{ color: "#333" }}>{movement.description || "—"}</td>
-                  <td className="py-3" style={{ color: "#888" }}>{new Date(movement.date).toLocaleDateString("ar-EG")}</td>
-                  <td className="py-3 font-medium" style={{ color: movement.type === "deposit" ? "#217346" : "#c62828" }}>
-                    {movement.type === "deposit" ? "+" : "-"} {formatMoney(movement.amount)}
-                  </td>
-                  <td className="py-3" style={{ color: "#888" }}>{movement.created_by_name || "—"}</td>
-                  <td className="py-3">
-                    {canDelete && (
-                      <button onClick={() => handleDelete(movement.id)}
-                        className="text-xs transition"
-                        style={{ color: "#bbb" }}
-                        onMouseOver={e => (e.currentTarget.style.color = "#c62828")}
-                        onMouseOut={e => (e.currentTarget.style.color = "#bbb")}>
-                        حذف
-                      </button>
-                    )}
-                  </td>
+          <div className="overflow-x-auto">
+            <table dir="rtl" lang="ar" className="w-full min-w-[44rem] border-collapse text-sm">
+              <thead>
+                <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+                  <th className="text-right pb-3 px-1" style={{ color: "#888" }}>النوع</th>
+                  <th className="text-right pb-3 px-1" style={{ color: "#888" }}>المصدر</th>
+                  <th className="text-right pb-3 px-1" style={{ color: "#888" }}>البيان</th>
+                  <th className="text-right pb-3 px-1" style={{ color: "#888" }}>التاريخ</th>
+                  <th className="text-right pb-3 px-1" style={{ color: "#888" }}>المبلغ</th>
+                  <th className="text-right pb-3 px-1" style={{ color: "#888" }}>بواسطة</th>
+                  <th className="text-right pb-3 px-1 w-14"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {movements.map((movement) => (
+                  <tr key={movement.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
+                    <td className="py-3 px-1 align-top">
+                      <span className="text-xs px-2 py-1 rounded-full"
+                        style={{
+                          background: movement.type === "deposit" ? "#e8f5e9" : "#ffebee",
+                          color: movement.type === "deposit" ? "#217346" : "#c62828",
+                        }}>
+                        {movement.type === "deposit" ? "إيداع" : "سحب"}
+                      </span>
+                    </td>
+                    <td className="py-3 px-1 align-top" style={{ color: sourceColors[movement.source] }}>{sourceLabels[movement.source]}</td>
+                    <td className="py-3 px-1 align-top" style={{ color: "#333" }}>{movement.description || "—"}</td>
+                    <td className="py-3 px-1 align-top" style={{ color: "#888" }}>{new Date(movement.date).toLocaleDateString("ar-EG")}</td>
+                    <td className="py-3 px-1 align-top font-medium whitespace-nowrap" style={{ color: movement.type === "deposit" ? "#217346" : "#c62828" }}>
+                      {movement.type === "deposit" ? "+" : "-"} {formatMoney(movement.amount)}
+                    </td>
+                    <td className="py-3 px-1 align-top whitespace-nowrap" style={{ color: "#888" }}>{movement.created_by_name || "—"}</td>
+                    <td className="py-3 px-1 align-top">
+                      {canDelete && (
+                        <button onClick={() => handleDelete(movement.id)}
+                          className="text-xs transition"
+                          style={{ color: "#bbb" }}
+                          onMouseOver={e => (e.currentTarget.style.color = "#c62828")}
+                          onMouseOut={e => (e.currentTarget.style.color = "#bbb")}>
+                          حذف
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

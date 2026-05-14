@@ -180,43 +180,45 @@ const Users = () => {
             <p>لا يوجد مستخدمون بعد</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-gray-500 border-b border-gray-800">
-                <th className="text-right pb-3">الاسم</th>
-                <th className="text-right pb-3">البريد الإلكتروني</th>
-                <th className="text-right pb-3">الدور</th>
-                <th className="text-right pb-3">تاريخ الإضافة</th>
-                <th className="text-right pb-3">بواسطة</th>
-                <th className="text-right pb-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-800">
-              {users.map((user) => (
-                <tr key={user.id} className="text-gray-300">
-                  <td className="py-3 font-medium">{user.name}</td>
-                  <td className="py-3 text-gray-500">{user.email}</td>
-                  <td className="py-3">
-                    <span className={`text-xs px-2 py-1 rounded-full ${roleColor(user.role)}`}>
-                      {roleLabel(user.role)}
-                    </span>
-                  </td>
-                  <td className="py-3 text-gray-500">
-                    {new Date(user.created_at).toLocaleDateString('ar-EG')}
-                  </td>
-                  <td className="py-3 text-gray-500">{user.created_by_name || "—"}</td>
-                  <td className="py-3">
-                    <button
-                      onClick={() => handleDelete(user.id)}
-                      className="text-gray-600 hover:text-red-400 transition text-xs"
-                    >
-                      حذف
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table dir="rtl" lang="ar" className="w-full min-w-[40rem] border-collapse text-sm">
+              <thead>
+                <tr className="text-gray-500 border-b border-gray-800">
+                  <th className="text-right pb-3 px-1">الاسم</th>
+                  <th className="text-right pb-3 px-1">البريد الإلكتروني</th>
+                  <th className="text-right pb-3 px-1">الدور</th>
+                  <th className="text-right pb-3 px-1">تاريخ الإضافة</th>
+                  <th className="text-right pb-3 px-1">بواسطة</th>
+                  <th className="text-right pb-3 px-1 w-14"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-800">
+                {users.map((user) => (
+                  <tr key={user.id} className="text-gray-300">
+                    <td className="py-3 px-1 align-top font-medium">{user.name}</td>
+                    <td className="py-3 px-1 align-top text-gray-500 break-all">{user.email}</td>
+                    <td className="py-3 px-1 align-top">
+                      <span className={`text-xs px-2 py-1 rounded-full ${roleColor(user.role)}`}>
+                        {roleLabel(user.role)}
+                      </span>
+                    </td>
+                    <td className="py-3 px-1 align-top text-gray-500 whitespace-nowrap">
+                      {new Date(user.created_at).toLocaleDateString('ar-EG')}
+                    </td>
+                    <td className="py-3 px-1 align-top text-gray-500 whitespace-nowrap">{user.created_by_name || "—"}</td>
+                    <td className="py-3 px-1 align-top">
+                      <button
+                        onClick={() => handleDelete(user.id)}
+                        className="text-gray-600 hover:text-red-400 transition text-xs"
+                      >
+                        حذف
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

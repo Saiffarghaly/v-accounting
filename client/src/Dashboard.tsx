@@ -209,38 +209,40 @@ const Dashboard = () => {
             <div className="rounded-xl p-6 border" style={{ background: "#ffffff", borderColor: "#e0e0e0" }}>
               <h3 className="text-sm font-medium mb-4" style={{ color: "#555" }}>آخر المعاملات</h3>
               {stats?.recentTransactions && stats.recentTransactions.length > 0 ? (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
-                      <th className="text-right pb-3" style={{ color: "#888" }}>البيان</th>
-                      <th className="text-right pb-3" style={{ color: "#888" }}>التصنيف</th>
-                      <th className="text-right pb-3" style={{ color: "#888" }}>التاريخ</th>
-                      <th className="text-right pb-3" style={{ color: "#888" }}>المبلغ</th>
-                      <th className="text-right pb-3" style={{ color: "#888" }}>النوع</th>
-                      <th className="text-right pb-3" style={{ color: "#888" }}>بواسطة</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stats.recentTransactions.map((tx: any) => (
-                      <tr key={tx.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                        <td className="py-3" style={{ color: "#333" }}>{tx.description}</td>
-                        <td className="py-3" style={{ color: "#888" }}>{tx.category}</td>
-                        <td className="py-3" style={{ color: "#888" }}>{new Date(tx.date).toLocaleDateString('ar-EG')}</td>
-                        <td className="py-3 font-medium" style={{ color: "#333" }}>{Number(tx.amount).toLocaleString()} ج</td>
-                        <td className="py-3">
-                          <span className="text-xs px-2 py-1 rounded-full"
-                            style={{
-                              background: tx.type === "إيراد" ? "#e8f5e9" : "#ffebee",
-                              color: tx.type === "إيراد" ? "#217346" : "#c62828"
-                            }}>
-                            {tx.type}
-                          </span>
-                        </td>
-                        <td className="py-3" style={{ color: "#888" }}>{tx.created_by_name || "—"}</td>
+                <div className="overflow-x-auto">
+                  <table dir="rtl" lang="ar" className="w-full min-w-[40rem] border-collapse text-sm">
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
+                        <th className="text-right pb-3 px-1" style={{ color: "#888" }}>البيان</th>
+                        <th className="text-right pb-3 px-1" style={{ color: "#888" }}>التصنيف</th>
+                        <th className="text-right pb-3 px-1" style={{ color: "#888" }}>التاريخ</th>
+                        <th className="text-right pb-3 px-1" style={{ color: "#888" }}>المبلغ</th>
+                        <th className="text-right pb-3 px-1" style={{ color: "#888" }}>النوع</th>
+                        <th className="text-right pb-3 px-1" style={{ color: "#888" }}>بواسطة</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {stats.recentTransactions.map((tx: any) => (
+                        <tr key={tx.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
+                          <td className="py-3 px-1 align-top" style={{ color: "#333" }}>{tx.description ?? "—"}</td>
+                          <td className="py-3 px-1 align-top" style={{ color: "#888" }}>{tx.category}</td>
+                          <td className="py-3 px-1 align-top" style={{ color: "#888" }}>{new Date(tx.date).toLocaleDateString('ar-EG')}</td>
+                          <td className="py-3 px-1 align-top font-medium" style={{ color: "#333" }}>{Number(tx.amount).toLocaleString()} ج</td>
+                          <td className="py-3 px-1 align-top">
+                            <span className="text-xs px-2 py-1 rounded-full"
+                              style={{
+                                background: tx.type === "إيراد" ? "#e8f5e9" : "#ffebee",
+                                color: tx.type === "إيراد" ? "#217346" : "#c62828"
+                              }}>
+                              {tx.type}
+                            </span>
+                          </td>
+                          <td className="py-3 px-1 align-top whitespace-nowrap" style={{ color: "#888" }}>{tx.created_by_name || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
                 <div className="text-center py-6" style={{ color: "#bbb" }}>
                   <p>لا توجد معاملات بعد</p>

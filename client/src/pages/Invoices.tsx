@@ -248,54 +248,56 @@ const Invoices = () => {
             <p>لا توجد فواتير بعد</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-gray-500 border-b border-gray-800">
-                <th className="text-right pb-3">#</th>
-                <th className="text-right pb-3">العميل</th>
-                <th className="text-right pb-3">المبلغ</th>
-                <th className="text-right pb-3">الاستحقاق</th>
-                <th className="text-right pb-3">الحالة</th>
-                <th className="text-right pb-3">بواسطة</th>
-                <th className="text-right pb-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-800">
-              {invoices.map((inv) => (
-                <tr key={inv.id} className="text-gray-300">
-                  <td className="py-3 text-gray-500">#{inv.id}</td>
-                  <td className="py-3 font-medium">{inv.client_name}</td>
-                  <td className="py-3">{Number(inv.amount).toLocaleString()} ج</td>
-                  <td className="py-3 text-gray-500">{inv.due_date ? new Date(inv.due_date).toLocaleDateString('ar-EG') : "—"}</td>
-                  <td className="py-3">
-                    {canEdit ? (
-                      <select value={inv.status} onChange={(e) => handleStatusChange(inv.id, e.target.value)}
-                        className={`text-xs px-2 py-1 rounded-full border-0 cursor-pointer ${statusColor(inv.status)}`}>
-                        <option value="pending">معلق</option>
-                        <option value="paid">مدفوع</option>
-                        <option value="overdue">متأخر</option>
-                      </select>
-                    ) : (
-                      <span className={`text-xs px-2 py-1 rounded-full ${statusColor(inv.status)}`}>
-                        {statusLabel(inv.status)}
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 text-gray-500">{inv.created_by_name || "—"}</td>
-                  <td className="py-3">
-                    <div className="flex justify-end gap-3 whitespace-nowrap">
-                      <button onClick={() => exportPDF(inv)}
-                        className="text-gray-600 hover:text-amber-400 transition text-xs">PDF</button>
-                      {canDelete && (
-                        <button onClick={() => handleDelete(inv.id)}
-                          className="text-gray-600 hover:text-red-400 transition text-xs">حذف</button>
-                      )}
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table dir="rtl" lang="ar" className="w-full min-w-[48rem] border-collapse text-sm">
+              <thead>
+                <tr className="text-gray-500 border-b border-gray-800">
+                  <th className="text-right pb-3 px-1">#</th>
+                  <th className="text-right pb-3 px-1">العميل</th>
+                  <th className="text-right pb-3 px-1">المبلغ</th>
+                  <th className="text-right pb-3 px-1">الاستحقاق</th>
+                  <th className="text-right pb-3 px-1">الحالة</th>
+                  <th className="text-right pb-3 px-1">بواسطة</th>
+                  <th className="text-right pb-3 px-1 w-20"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-800">
+                {invoices.map((inv) => (
+                  <tr key={inv.id} className="text-gray-300">
+                    <td className="py-3 px-1 align-top text-gray-500">#{inv.id}</td>
+                    <td className="py-3 px-1 align-top font-medium">{inv.client_name}</td>
+                    <td className="py-3 px-1 align-top whitespace-nowrap">{Number(inv.amount).toLocaleString()} ج</td>
+                    <td className="py-3 px-1 align-top text-gray-500">{inv.due_date ? new Date(inv.due_date).toLocaleDateString('ar-EG') : "—"}</td>
+                    <td className="py-3 px-1 align-top">
+                      {canEdit ? (
+                        <select value={inv.status} onChange={(e) => handleStatusChange(inv.id, e.target.value)}
+                          className={`text-xs px-2 py-1 rounded-full border-0 cursor-pointer ${statusColor(inv.status)}`}>
+                          <option value="pending">معلق</option>
+                          <option value="paid">مدفوع</option>
+                          <option value="overdue">متأخر</option>
+                        </select>
+                      ) : (
+                        <span className={`text-xs px-2 py-1 rounded-full ${statusColor(inv.status)}`}>
+                          {statusLabel(inv.status)}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 px-1 align-top text-gray-500 whitespace-nowrap">{inv.created_by_name || "—"}</td>
+                    <td className="py-3 px-1 align-top">
+                      <div className="inline-flex gap-3 flex-nowrap">
+                        <button onClick={() => exportPDF(inv)}
+                          className="text-gray-600 hover:text-amber-400 transition text-xs">PDF</button>
+                        {canDelete && (
+                          <button onClick={() => handleDelete(inv.id)}
+                            className="text-gray-600 hover:text-red-400 transition text-xs">حذف</button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

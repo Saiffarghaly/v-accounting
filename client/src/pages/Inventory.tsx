@@ -244,45 +244,47 @@ const Inventory = () => {
                 <p>لا توجد أصناف بعد</p>
               </div>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-gray-500 border-b border-gray-800">
-                    <th className="text-right pb-3">الصنف</th>
-                    <th className="text-right pb-3">الفئة</th>
-                    <th className="text-right pb-3">سعر الشراء</th>
-                    <th className="text-right pb-3">جملة</th>
-                    <th className="text-right pb-3">قطاعي</th>
-                    <th className="text-right pb-3">الكمية</th>
-                    <th className="text-right pb-3">الحالة</th>
-                    <th className="text-right pb-3">بواسطة</th>
-                    <th className="text-right pb-3"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800">
-                  {items.map((item) => (
-                    <tr key={item.id} className="text-gray-300">
-                      <td className="py-3 font-medium">{item.name}</td>
-                      <td className="py-3 text-gray-500">{item.category || "—"}</td>
-                      <td className="py-3">{Number(item.buy_price).toLocaleString()} ج</td>
-                      <td className="py-3">{Number(item.sell_wholesale).toLocaleString()} ج</td>
-                      <td className="py-3">{Number(item.sell_retail).toLocaleString()} ج</td>
-                      <td className="py-3">{item.quantity} {item.unit}</td>
-                      <td className="py-3">
-                        <span className={`text-xs px-2 py-1 rounded-full ${item.quantity <= item.min_quantity ? "bg-red-400/10 text-red-400" : "bg-green-400/10 text-green-400"}`}>
-                          {item.quantity <= item.min_quantity ? "منخفض" : "متوفر"}
-                        </span>
-                      </td>
-                      <td className="py-3 text-gray-500">{item.created_by_name || "—"}</td>
-                      <td className="py-3">
-                        {canDelete && (
-                          <button onClick={() => handleDelete(item.id)}
-                          className="text-gray-600 hover:text-red-400 transition text-xs">حذف</button>
-                        )}
-                      </td>
+              <div className="overflow-x-auto">
+                <table dir="rtl" lang="ar" className="w-full min-w-[56rem] border-collapse text-sm">
+                  <thead>
+                    <tr className="text-gray-500 border-b border-gray-800">
+                      <th className="text-right pb-3 px-1">الصنف</th>
+                      <th className="text-right pb-3 px-1">الفئة</th>
+                      <th className="text-right pb-3 px-1">سعر الشراء</th>
+                      <th className="text-right pb-3 px-1">جملة</th>
+                      <th className="text-right pb-3 px-1">قطاعي</th>
+                      <th className="text-right pb-3 px-1">الكمية</th>
+                      <th className="text-right pb-3 px-1">الحالة</th>
+                      <th className="text-right pb-3 px-1">بواسطة</th>
+                      <th className="text-right pb-3 px-1 w-14"></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800">
+                    {items.map((item) => (
+                      <tr key={item.id} className="text-gray-300">
+                        <td className="py-3 px-1 align-top font-medium">{item.name}</td>
+                        <td className="py-3 px-1 align-top text-gray-500">{item.category || "—"}</td>
+                        <td className="py-3 px-1 align-top whitespace-nowrap">{Number(item.buy_price).toLocaleString()} ج</td>
+                        <td className="py-3 px-1 align-top whitespace-nowrap">{Number(item.sell_wholesale).toLocaleString()} ج</td>
+                        <td className="py-3 px-1 align-top whitespace-nowrap">{Number(item.sell_retail).toLocaleString()} ج</td>
+                        <td className="py-3 px-1 align-top whitespace-nowrap">{item.quantity} {item.unit}</td>
+                        <td className="py-3 px-1 align-top">
+                          <span className={`text-xs px-2 py-1 rounded-full ${item.quantity <= item.min_quantity ? "bg-red-400/10 text-red-400" : "bg-green-400/10 text-green-400"}`}>
+                            {item.quantity <= item.min_quantity ? "منخفض" : "متوفر"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-1 align-top text-gray-500 whitespace-nowrap">{item.created_by_name || "—"}</td>
+                        <td className="py-3 px-1 align-top">
+                          {canDelete && (
+                            <button onClick={() => handleDelete(item.id)}
+                              className="text-gray-600 hover:text-red-400 transition text-xs">حذف</button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
@@ -348,34 +350,36 @@ const Inventory = () => {
                 <p>لا توجد مرتجعات بعد</p>
               </div>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-gray-500 border-b border-gray-800">
-                    <th className="text-right pb-3">الصنف</th>
-                    <th className="text-right pb-3">الكمية</th>
-                    <th className="text-right pb-3">النوع</th>
-                    <th className="text-right pb-3">السبب</th>
-                    <th className="text-right pb-3">التاريخ</th>
-                    <th className="text-right pb-3">بواسطة</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800">
-                  {returns.map((r) => (
-                    <tr key={r.id} className="text-gray-300">
-                      <td className="py-3 font-medium">{r.item_name}</td>
-                      <td className="py-3">{r.quantity}</td>
-                      <td className="py-3">
-                        <span className="text-xs px-2 py-1 rounded-full bg-yellow-400/10 text-yellow-400">
-                          {r.type === "return" ? "من عميل" : "لمورد"}
-                        </span>
-                      </td>
-                      <td className="py-3 text-gray-500">{r.reason || "—"}</td>
-                      <td className="py-3 text-gray-500">{new Date(r.date).toLocaleDateString('ar-EG')}</td>
-                      <td className="py-3 text-gray-500">{r.created_by_name || "—"}</td>
+              <div className="overflow-x-auto">
+                <table dir="rtl" lang="ar" className="w-full min-w-[40rem] border-collapse text-sm">
+                  <thead>
+                    <tr className="text-gray-500 border-b border-gray-800">
+                      <th className="text-right pb-3 px-1">الصنف</th>
+                      <th className="text-right pb-3 px-1">الكمية</th>
+                      <th className="text-right pb-3 px-1">النوع</th>
+                      <th className="text-right pb-3 px-1">السبب</th>
+                      <th className="text-right pb-3 px-1">التاريخ</th>
+                      <th className="text-right pb-3 px-1">بواسطة</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800">
+                    {returns.map((r) => (
+                      <tr key={r.id} className="text-gray-300">
+                        <td className="py-3 px-1 align-top font-medium">{r.item_name}</td>
+                        <td className="py-3 px-1 align-top">{r.quantity}</td>
+                        <td className="py-3 px-1 align-top">
+                          <span className="text-xs px-2 py-1 rounded-full bg-yellow-400/10 text-yellow-400">
+                            {r.type === "return" ? "من عميل" : "لمورد"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-1 align-top text-gray-500">{r.reason || "—"}</td>
+                        <td className="py-3 px-1 align-top text-gray-500 whitespace-nowrap">{new Date(r.date).toLocaleDateString('ar-EG')}</td>
+                        <td className="py-3 px-1 align-top text-gray-500 whitespace-nowrap">{r.created_by_name || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
@@ -433,28 +437,30 @@ const Inventory = () => {
                 <p>لا توجد هوالك مسجلة</p>
               </div>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-gray-500 border-b border-gray-800">
-                    <th className="text-right pb-3">الصنف</th>
-                    <th className="text-right pb-3">الكمية</th>
-                    <th className="text-right pb-3">السبب</th>
-                    <th className="text-right pb-3">التاريخ</th>
-                    <th className="text-right pb-3">بواسطة</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800">
-                  {damages.map((d) => (
-                    <tr key={d.id} className="text-gray-300">
-                      <td className="py-3 font-medium">{d.item_name}</td>
-                      <td className="py-3 text-red-400">{d.quantity}</td>
-                      <td className="py-3 text-gray-500">{d.reason || "—"}</td>
-                      <td className="py-3 text-gray-500">{new Date(d.date).toLocaleDateString('ar-EG')}</td>
-                      <td className="py-3 text-gray-500">{d.created_by_name || "—"}</td>
+              <div className="overflow-x-auto">
+                <table dir="rtl" lang="ar" className="w-full min-w-[36rem] border-collapse text-sm">
+                  <thead>
+                    <tr className="text-gray-500 border-b border-gray-800">
+                      <th className="text-right pb-3 px-1">الصنف</th>
+                      <th className="text-right pb-3 px-1">الكمية</th>
+                      <th className="text-right pb-3 px-1">السبب</th>
+                      <th className="text-right pb-3 px-1">التاريخ</th>
+                      <th className="text-right pb-3 px-1">بواسطة</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800">
+                    {damages.map((d) => (
+                      <tr key={d.id} className="text-gray-300">
+                        <td className="py-3 px-1 align-top font-medium">{d.item_name}</td>
+                        <td className="py-3 px-1 align-top text-red-400">{d.quantity}</td>
+                        <td className="py-3 px-1 align-top text-gray-500">{d.reason || "—"}</td>
+                        <td className="py-3 px-1 align-top text-gray-500 whitespace-nowrap">{new Date(d.date).toLocaleDateString('ar-EG')}</td>
+                        <td className="py-3 px-1 align-top text-gray-500 whitespace-nowrap">{d.created_by_name || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
