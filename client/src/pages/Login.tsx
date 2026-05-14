@@ -19,7 +19,7 @@ const Login = ({ onSwitch }: { onSwitch: () => void }) => {
         : "https://v-accounting-production.up.railway.app/api/users/login";
 
       const res = await axios.post(endpoint, { email, password });
-      login(res.data.token, res.data.office);
+      login(res.data.token, res.data.office, res.data.user?.role || "owner");
     } catch (err: any) {
       setError(err.response?.data?.error || "Something went wrong");
     } finally {
