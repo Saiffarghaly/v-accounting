@@ -282,13 +282,15 @@ const Invoices = () => {
                     )}
                   </td>
                   <td className="py-3 text-gray-500">{inv.created_by_name || "—"}</td>
-                  <td className="py-3 flex gap-3">
-                    <button onClick={() => exportPDF(inv)}
-                      className="text-gray-600 hover:text-amber-400 transition text-xs">PDF</button>
-                    {canDelete && (
-                      <button onClick={() => handleDelete(inv.id)}
-                      className="text-gray-600 hover:text-red-400 transition text-xs">حذف</button>
-                    )}
+                  <td className="py-3">
+                    <div className="flex justify-end gap-3 whitespace-nowrap">
+                      <button onClick={() => exportPDF(inv)}
+                        className="text-gray-600 hover:text-amber-400 transition text-xs">PDF</button>
+                      {canDelete && (
+                        <button onClick={() => handleDelete(inv.id)}
+                          className="text-gray-600 hover:text-red-400 transition text-xs">حذف</button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
