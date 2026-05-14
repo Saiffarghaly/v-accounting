@@ -65,5 +65,35 @@ router.delete('/:id', auth, ownerOnly, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+// User Login
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: 'Invalid email or password' });
+    }
+    const user = result.rows[0];
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return res.status(400).json({ error: 'Invalid email or password' });
+    }
+
+    // Get office info
+    const officeResult = await pool.query('SELECT * FROM offices WHERE id = $1', [user.office_id]);
+    const office = officeResult.rows[0];
+
+    const token = jwt.sign(
+      { officeId: user.office_id, userId: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({ token, office: { id: office.id, name: office.name, email: office.email }, user: { id: user.id, name: user.name, role: user.role } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 module.exports = router;

@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 
 const Login = ({ onSwitch }: { onSwitch: () => void }) => {
   const { login } = useAuth();
+  const [loginType, setLoginType] = useState<"office" | "user">("office");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -13,10 +14,11 @@ const Login = ({ onSwitch }: { onSwitch: () => void }) => {
     setLoading(true);
     setError("");
     try {
-      const res = await axios.post("https://v-accounting-production.up.railway.app/api/auth/login", {
-        email,
-        password,
-      });
+      const endpoint = loginType === "office"
+        ? "https://v-accounting-production.up.railway.app/api/auth/login"
+        : "https://v-accounting-production.up.railway.app/api/users/login";
+
+      const res = await axios.post(endpoint, { email, password });
       login(res.data.token, res.data.office);
     } catch (err: any) {
       setError(err.response?.data?.error || "Something went wrong");
@@ -29,12 +31,36 @@ const Login = ({ onSwitch }: { onSwitch: () => void }) => {
     <div className="min-h-screen flex items-center justify-center" style={{ background: "#f5f5f5" }}>
       <div className="rounded-2xl p-8 w-full max-w-md border" style={{ background: "#ffffff", borderColor: "#e0e0e0" }}>
 
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-2">
             <div className="w-8 h-8 rounded flex items-center justify-center text-white font-bold text-sm" style={{ background: "#217346" }}>V</div>
             <h1 className="text-2xl font-bold" style={{ color: "#217346" }}>V-ACCOUNTING</h1>
           </div>
-          <p className="text-sm" style={{ color: "#888" }}>تسجيل الدخول لمكتبك</p>
+          <p className="text-sm" style={{ color: "#888" }}>تسجيل الدخول</p>
+        </div>
+
+        {/* Login Type Toggle */}
+        <div className="flex rounded-lg overflow-hidden border mb-6" style={{ borderColor: "#e0e0e0" }}>
+          <button
+            onClick={() => setLoginType("office")}
+            className="flex-1 py-2 text-sm font-medium transition"
+            style={{
+              background: loginType === "office" ? "#217346" : "#f9f9f9",
+              color: loginType === "office" ? "#ffffff" : "#666",
+            }}
+          >
+            🏢 صاحب مكتب
+          </button>
+          <button
+            onClick={() => setLoginType("user")}
+            className="flex-1 py-2 text-sm font-medium transition"
+            style={{
+              background: loginType === "user" ? "#217346" : "#f9f9f9",
+              color: loginType === "user" ? "#ffffff" : "#666",
+            }}
+          >
+            👤 موظف
+          </button>
         </div>
 
         {error && (
