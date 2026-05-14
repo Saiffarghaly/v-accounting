@@ -1,4 +1,4 @@
-import { BrandLogo } from "../components/BrandLogo";
+import { BrandWordmark } from "../components/BrandWordmark";
 
 const Landing = ({
   onLogin,
@@ -13,7 +13,7 @@ const Landing = ({
       {/* Navbar */}
       <nav className="border-b border-gray-300 px-8 py-4 flex items-center justify-between bg-gray-100">
         <div className="flex items-center min-w-0">
-          <BrandLogo size="compact" className="px-2 py-1" />
+          <BrandWordmark variant="onLight" size="sm" />
         </div>
 
         <div className="flex items-center gap-4">
@@ -36,7 +36,7 @@ const Landing = ({
       {/* Hero */}
       <section className="text-center py-24 px-8">
         <div className="flex justify-center mb-8">
-          <BrandLogo size="hero" className="px-5 py-3 rounded-2xl shadow-md" />
+          <BrandWordmark variant="onLight" size="lg" />
         </div>
 
         <div className="inline-block bg-[#217346]/10 border border-[#217346]/20 text-[#217346] text-xs px-4 py-2 rounded-full mb-6">

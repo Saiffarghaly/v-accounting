@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { BrandWordmark } from "../components/BrandWordmark";
 
 const Login = ({ onSwitch }: { onSwitch: () => void }) => {
   const { login } = useAuth();
@@ -32,9 +33,8 @@ const Login = ({ onSwitch }: { onSwitch: () => void }) => {
       <div className="rounded-2xl p-8 w-full max-w-md border" style={{ background: "#ffffff", borderColor: "#e0e0e0" }}>
 
         <div className="text-center mb-6">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded flex items-center justify-center text-white font-bold text-sm" style={{ background: "#217346" }}>V</div>
-            <h1 className="text-2xl font-bold" style={{ color: "#217346" }}>V-ACCOUNTING</h1>
+          <div className="mb-2 flex justify-center">
+            <BrandWordmark variant="onLight" size="md" />
           </div>
           <p className="text-sm" style={{ color: "#888" }}>تسجيل الدخول</p>
         </div>

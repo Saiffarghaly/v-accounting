@@ -8,7 +8,7 @@ import ImportExcel from "./pages/ImportExcel";
 import Users from "./pages/Users";
 import Inventory from "./pages/Inventory";
 import Treasury from "./pages/Treasury";
-import { BrandLogo } from "./components/BrandLogo";
+import { BrandWordmark } from "./components/BrandWordmark";
 
 interface Stats {
   income: number;
@@ -51,8 +51,8 @@ const Dashboard = () => {
       {/* Sidebar - Excel Green */}
       <aside className="w-64 flex flex-col" style={{ background: "#217346" }}>
         <div className="p-4" style={{ borderBottom: "1px solid #1a5c38" }}>
-          <div className="mx-auto w-full flex justify-center">
-            <BrandLogo size="sidebar" />
+          <div className="mx-auto flex justify-center">
+            <BrandWordmark variant="onDarkGreen" size="md" />
           </div>
         </div>
 
@@ -116,7 +116,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-4 min-w-0">
             {activePage === "dashboard" && (
               <div className="shrink-0">
-                <BrandLogo size="compact" className="px-2 py-1" />
+                <BrandWordmark variant="onDarkGreen" size="sm" />
               </div>
             )}
             <h2 className="text-lg font-semibold truncate">
