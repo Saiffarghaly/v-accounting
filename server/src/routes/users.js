@@ -10,6 +10,7 @@ const auth = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.officeId = decoded.officeId;
+    req.userId = decoded.userId || null;
     req.role = decoded.role || 'owner';
     next();
   } catch {
@@ -22,11 +23,24 @@ const ownerOnly = (req, res, next) => {
   next();
 };
 
+const ensureAuditColumn = async () => {
+  await pool.query(
+    'ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL'
+  );
+};
+
 // Get all users in office
 router.get('/', auth, async (req, res) => {
   try {
+    await ensureAuditColumn();
+
     const result = await pool.query(
-      'SELECT id, name, email, role, created_at FROM users WHERE office_id = $1 ORDER BY created_at DESC',
+      `SELECT users.id, users.name, users.email, users.role, users.created_at, COALESCE(creator.name, offices.name) as created_by_name
+       FROM users
+       LEFT JOIN users creator ON users.created_by_user_id = creator.id
+       LEFT JOIN offices ON users.office_id = offices.id
+       WHERE users.office_id = $1
+       ORDER BY users.created_at DESC`,
       [req.officeId]
     );
     res.json(result.rows);
@@ -39,13 +53,15 @@ router.get('/', auth, async (req, res) => {
 router.post('/', auth, ownerOnly, async (req, res) => {
   const { name, email, password, role } = req.body;
   try {
+    await ensureAuditColumn();
+
     const exists = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (exists.rows.length > 0) return res.status(400).json({ error: 'Email already exists' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await pool.query(
-      'INSERT INTO users (office_id, name, email, password, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, email, role',
-      [req.officeId, name, email, hashedPassword, role]
+      'INSERT INTO users (office_id, created_by_user_id, name, email, password, role) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, role',
+      [req.officeId, req.userId, name, email, hashedPassword, role]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

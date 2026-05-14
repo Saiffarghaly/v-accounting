@@ -9,6 +9,7 @@ interface Client {
   email: string;
   phone: string;
   address: string;
+  created_by_name?: string;
 }
 
 const Clients = () => {
@@ -148,6 +149,7 @@ const Clients = () => {
               {client.email && <p className="text-sm text-gray-500">📧 {client.email}</p>}
               {client.phone && <p className="text-sm text-gray-500">📞 {client.phone}</p>}
               {client.address && <p className="text-sm text-gray-500">📍 {client.address}</p>}
+              <p className="text-xs text-gray-600">بواسطة: {client.created_by_name || "—"}</p>
             </div>
           ))}
         </div>

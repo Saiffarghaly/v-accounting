@@ -9,6 +9,7 @@ const auth = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.officeId = decoded.officeId;
+    req.userId = decoded.userId || null;
     next();
   } catch {
     res.status(401).json({ error: 'Invalid token' });
@@ -23,6 +24,7 @@ const ensureTreasuryTable = async () => {
     CREATE TABLE IF NOT EXISTS treasury_movements (
       id SERIAL PRIMARY KEY,
       office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+      created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
       type VARCHAR(20) NOT NULL CHECK (type IN ('deposit', 'withdraw')),
       source VARCHAR(30) NOT NULL CHECK (source IN ('cash', 'vodafone_cash', 'instapay')),
       amount DECIMAL(12,2) NOT NULL CHECK (amount > 0),
@@ -31,6 +33,9 @@ const ensureTreasuryTable = async () => {
       created_at TIMESTAMP DEFAULT NOW()
     )
   `);
+  await pool.query(
+    'ALTER TABLE treasury_movements ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL'
+  );
 };
 
 const getSummary = async (officeId) => {
@@ -84,7 +89,12 @@ router.get('/', auth, async (req, res) => {
     await ensureTreasuryTable();
 
     const movements = await pool.query(
-      'SELECT * FROM treasury_movements WHERE office_id = $1 ORDER BY date DESC, created_at DESC',
+      `SELECT tm.*, COALESCE(u.name, o.name) as created_by_name
+       FROM treasury_movements tm
+       LEFT JOIN users u ON tm.created_by_user_id = u.id
+       LEFT JOIN offices o ON tm.office_id = o.id
+       WHERE tm.office_id = $1
+       ORDER BY tm.date DESC, tm.created_at DESC`,
       [req.officeId]
     );
     const summary = await getSummary(req.officeId);
@@ -126,10 +136,10 @@ router.post('/', auth, async (req, res) => {
     }
 
     const result = await pool.query(
-      `INSERT INTO treasury_movements (office_id, type, source, amount, description, date)
-       VALUES ($1, $2, $3, $4, $5, COALESCE($6::date, CURRENT_DATE))
+      `INSERT INTO treasury_movements (office_id, created_by_user_id, type, source, amount, description, date)
+       VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7::date, CURRENT_DATE))
        RETURNING *`,
-      [req.officeId, type, source, value, description || '', date || null]
+      [req.officeId, req.userId, type, source, value, description || '', date || null]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

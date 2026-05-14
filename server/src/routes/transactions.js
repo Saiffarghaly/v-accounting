@@ -10,17 +10,31 @@ const auth = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.officeId = decoded.officeId;
+    req.userId = decoded.userId || null;
     next();
   } catch {
     res.status(401).json({ error: 'Invalid token' });
   }
 };
 
+const ensureAuditColumn = async () => {
+  await pool.query(
+    'ALTER TABLE transactions ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL'
+  );
+};
+
 // Get all transactions for this office
 router.get('/', auth, async (req, res) => {
   try {
+    await ensureAuditColumn();
+
     const result = await pool.query(
-      'SELECT * FROM transactions WHERE office_id = $1 ORDER BY date DESC',
+      `SELECT t.*, COALESCE(u.name, o.name) as created_by_name
+       FROM transactions t
+       LEFT JOIN users u ON t.created_by_user_id = u.id
+       LEFT JOIN offices o ON t.office_id = o.id
+       WHERE t.office_id = $1
+       ORDER BY t.date DESC`,
       [req.officeId]
     );
     res.json(result.rows);
@@ -33,9 +47,11 @@ router.get('/', auth, async (req, res) => {
 router.post('/', auth, async (req, res) => {
   const { amount, type, category, description, date } = req.body;
   try {
+    await ensureAuditColumn();
+
     const result = await pool.query(
-      'INSERT INTO transactions (office_id, amount, type, category, description, date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [req.officeId, amount, type, category, description, date]
+      'INSERT INTO transactions (office_id, created_by_user_id, amount, type, category, description, date) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [req.officeId, req.userId, amount, type, category, description, date]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

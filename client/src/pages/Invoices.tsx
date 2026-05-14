@@ -12,6 +12,7 @@ interface Invoice {
   status: string;
   due_date: string;
   created_at: string;
+  created_by_name?: string;
 }
 
 interface Client {
@@ -255,6 +256,7 @@ const Invoices = () => {
                 <th className="text-right pb-3">المبلغ</th>
                 <th className="text-right pb-3">الاستحقاق</th>
                 <th className="text-right pb-3">الحالة</th>
+                <th className="text-right pb-3">بواسطة</th>
                 <th className="text-right pb-3"></th>
               </tr>
             </thead>
@@ -279,6 +281,7 @@ const Invoices = () => {
                       </span>
                     )}
                   </td>
+                  <td className="py-3 text-gray-500">{inv.created_by_name || "—"}</td>
                   <td className="py-3 flex gap-3">
                     <button onClick={() => exportPDF(inv)}
                       className="text-gray-600 hover:text-amber-400 transition text-xs">PDF</button>

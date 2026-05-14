@@ -8,6 +8,7 @@ interface User {
   email: string;
   role: string;
   created_at: string;
+  created_by_name?: string;
 }
 
 const roleColor = (role: string) => {
@@ -186,6 +187,7 @@ const Users = () => {
                 <th className="text-right pb-3">البريد الإلكتروني</th>
                 <th className="text-right pb-3">الدور</th>
                 <th className="text-right pb-3">تاريخ الإضافة</th>
+                <th className="text-right pb-3">بواسطة</th>
                 <th className="text-right pb-3"></th>
               </tr>
             </thead>
@@ -202,6 +204,7 @@ const Users = () => {
                   <td className="py-3 text-gray-500">
                     {new Date(user.created_at).toLocaleDateString('ar-EG')}
                   </td>
+                  <td className="py-3 text-gray-500">{user.created_by_name || "—"}</td>
                   <td className="py-3">
                     <button
                       onClick={() => handleDelete(user.id)}

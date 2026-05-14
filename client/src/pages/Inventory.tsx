@@ -13,6 +13,7 @@ interface Item {
   quantity: number;
   min_quantity: number;
   unit: string;
+  created_by_name?: string;
 }
 
 interface Return {
@@ -22,6 +23,7 @@ interface Return {
   reason: string;
   type: string;
   date: string;
+  created_by_name?: string;
 }
 
 interface Damage {
@@ -30,6 +32,7 @@ interface Damage {
   quantity: number;
   reason: string;
   date: string;
+  created_by_name?: string;
 }
 
 const Inventory = () => {
@@ -251,6 +254,7 @@ const Inventory = () => {
                     <th className="text-right pb-3">قطاعي</th>
                     <th className="text-right pb-3">الكمية</th>
                     <th className="text-right pb-3">الحالة</th>
+                    <th className="text-right pb-3">بواسطة</th>
                     <th className="text-right pb-3"></th>
                   </tr>
                 </thead>
@@ -268,6 +272,7 @@ const Inventory = () => {
                           {item.quantity <= item.min_quantity ? "منخفض" : "متوفر"}
                         </span>
                       </td>
+                      <td className="py-3 text-gray-500">{item.created_by_name || "—"}</td>
                       <td className="py-3">
                         {canDelete && (
                           <button onClick={() => handleDelete(item.id)}
@@ -351,6 +356,7 @@ const Inventory = () => {
                     <th className="text-right pb-3">النوع</th>
                     <th className="text-right pb-3">السبب</th>
                     <th className="text-right pb-3">التاريخ</th>
+                    <th className="text-right pb-3">بواسطة</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800">
@@ -365,6 +371,7 @@ const Inventory = () => {
                       </td>
                       <td className="py-3 text-gray-500">{r.reason || "—"}</td>
                       <td className="py-3 text-gray-500">{new Date(r.date).toLocaleDateString('ar-EG')}</td>
+                      <td className="py-3 text-gray-500">{r.created_by_name || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -433,6 +440,7 @@ const Inventory = () => {
                     <th className="text-right pb-3">الكمية</th>
                     <th className="text-right pb-3">السبب</th>
                     <th className="text-right pb-3">التاريخ</th>
+                    <th className="text-right pb-3">بواسطة</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800">
@@ -442,6 +450,7 @@ const Inventory = () => {
                       <td className="py-3 text-red-400">{d.quantity}</td>
                       <td className="py-3 text-gray-500">{d.reason || "—"}</td>
                       <td className="py-3 text-gray-500">{new Date(d.date).toLocaleDateString('ar-EG')}</td>
+                      <td className="py-3 text-gray-500">{d.created_by_name || "—"}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -9,17 +9,31 @@ const auth = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.officeId = decoded.officeId;
+    req.userId = decoded.userId || null;
     next();
   } catch {
     res.status(401).json({ error: 'Invalid token' });
   }
 };
 
+const ensureAuditColumn = async () => {
+  await pool.query(
+    'ALTER TABLE clients ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL'
+  );
+};
+
 // Get all clients
 router.get('/', auth, async (req, res) => {
   try {
+    await ensureAuditColumn();
+
     const result = await pool.query(
-      'SELECT * FROM clients WHERE office_id = $1 ORDER BY created_at DESC',
+      `SELECT c.*, COALESCE(u.name, o.name) as created_by_name
+       FROM clients c
+       LEFT JOIN users u ON c.created_by_user_id = u.id
+       LEFT JOIN offices o ON c.office_id = o.id
+       WHERE c.office_id = $1
+       ORDER BY c.created_at DESC`,
       [req.officeId]
     );
     res.json(result.rows);
@@ -32,9 +46,11 @@ router.get('/', auth, async (req, res) => {
 router.post('/', auth, async (req, res) => {
   const { name, email, phone, address } = req.body;
   try {
+    await ensureAuditColumn();
+
     const result = await pool.query(
-      'INSERT INTO clients (office_id, name, email, phone, address) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [req.officeId, name, email, phone, address]
+      'INSERT INTO clients (office_id, created_by_user_id, name, email, phone, address) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [req.officeId, req.userId, name, email, phone, address]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

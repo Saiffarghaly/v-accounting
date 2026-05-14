@@ -9,19 +9,30 @@ const auth = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.officeId = decoded.officeId;
+    req.userId = decoded.userId || null;
     next();
   } catch {
     res.status(401).json({ error: 'Invalid token' });
   }
 };
 
+const ensureAuditColumn = async () => {
+  await pool.query(
+    'ALTER TABLE invoices ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL'
+  );
+};
+
 // Get all invoices
 router.get('/', auth, async (req, res) => {
   try {
+    await ensureAuditColumn();
+
     const result = await pool.query(
-      `SELECT invoices.*, clients.name as client_name 
-       FROM invoices 
+      `SELECT invoices.*, clients.name as client_name, COALESCE(users.name, offices.name) as created_by_name
+       FROM invoices
        LEFT JOIN clients ON invoices.client_id = clients.id
+       LEFT JOIN users ON invoices.created_by_user_id = users.id
+       LEFT JOIN offices ON invoices.office_id = offices.id
        WHERE invoices.office_id = $1 
        ORDER BY invoices.created_at DESC`,
       [req.officeId]
@@ -36,9 +47,11 @@ router.get('/', auth, async (req, res) => {
 router.post('/', auth, async (req, res) => {
   const { client_id, amount, status, due_date } = req.body;
   try {
+    await ensureAuditColumn();
+
     const result = await pool.query(
-      'INSERT INTO invoices (office_id, client_id, amount, status, due_date) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [req.officeId, client_id, amount, status, due_date]
+      'INSERT INTO invoices (office_id, created_by_user_id, client_id, amount, status, due_date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [req.officeId, req.userId, client_id, amount, status, due_date]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

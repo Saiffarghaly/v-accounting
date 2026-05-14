@@ -11,6 +11,7 @@ interface TreasuryMovement {
   description: string;
   date: string;
   created_at: string;
+  created_by_name?: string;
 }
 
 interface SourceSummary {
@@ -242,6 +243,7 @@ const Treasury = () => {
                 <th className="text-right pb-3" style={{ color: "#888" }}>البيان</th>
                 <th className="text-right pb-3" style={{ color: "#888" }}>التاريخ</th>
                 <th className="text-right pb-3" style={{ color: "#888" }}>المبلغ</th>
+                <th className="text-right pb-3" style={{ color: "#888" }}>بواسطة</th>
                 <th className="text-right pb-3"></th>
               </tr>
             </thead>
@@ -263,6 +265,7 @@ const Treasury = () => {
                   <td className="py-3 font-medium" style={{ color: movement.type === "deposit" ? "#217346" : "#c62828" }}>
                     {movement.type === "deposit" ? "+" : "-"} {formatMoney(movement.amount)}
                   </td>
+                  <td className="py-3" style={{ color: "#888" }}>{movement.created_by_name || "—"}</td>
                   <td className="py-3">
                     {canDelete && (
                       <button onClick={() => handleDelete(movement.id)}

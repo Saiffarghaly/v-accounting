@@ -10,6 +10,7 @@ interface Transaction {
   category: string;
   description: string;
   date: string;
+  created_by_name?: string;
 }
 
 const categories = ["مبيعات", "إيجار", "مرتبات", "خامات", "فواتير", "أخرى"];
@@ -187,6 +188,7 @@ const Transactions = () => {
                 <th className="text-right pb-3" style={{ color: "#888" }}>التاريخ</th>
                 <th className="text-right pb-3" style={{ color: "#888" }}>المبلغ</th>
                 <th className="text-right pb-3" style={{ color: "#888" }}>النوع</th>
+                <th className="text-right pb-3" style={{ color: "#888" }}>بواسطة</th>
                 <th className="text-right pb-3"></th>
               </tr>
             </thead>
@@ -206,6 +208,7 @@ const Transactions = () => {
                       {tx.type}
                     </span>
                   </td>
+                  <td className="py-3" style={{ color: "#888" }}>{tx.created_by_name || "—"}</td>
                   <td className="py-3">
                     {canDelete && (
                       <button onClick={() => handleDelete(tx.id)}

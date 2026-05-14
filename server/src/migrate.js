@@ -16,6 +16,7 @@ const migrate = async () => {
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+        created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
@@ -26,6 +27,7 @@ const migrate = async () => {
       CREATE TABLE IF NOT EXISTS transactions (
         id SERIAL PRIMARY KEY,
         office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+        created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
         amount DECIMAL(12,2) NOT NULL,
         type VARCHAR(20) NOT NULL,
         category VARCHAR(100),
@@ -37,6 +39,7 @@ const migrate = async () => {
       CREATE TABLE IF NOT EXISTS clients (
         id SERIAL PRIMARY KEY,
         office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+        created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255),
         phone VARCHAR(50),
@@ -47,6 +50,7 @@ const migrate = async () => {
       CREATE TABLE IF NOT EXISTS invoices (
         id SERIAL PRIMARY KEY,
         office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+        created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
         client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
         amount DECIMAL(12,2) NOT NULL,
         status VARCHAR(20) DEFAULT 'pending',
@@ -54,9 +58,10 @@ const migrate = async () => {
         created_at TIMESTAMP DEFAULT NOW()
       );
       ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'employee';
-      CREATE TABLE IF NOT EXISTS inventory (
+CREATE TABLE IF NOT EXISTS inventory (
   id SERIAL PRIMARY KEY,
   office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
   name VARCHAR(255) NOT NULL,
   category VARCHAR(100),
   buy_price DECIMAL(12,2) DEFAULT 0,
@@ -71,6 +76,7 @@ const migrate = async () => {
 CREATE TABLE IF NOT EXISTS inventory_returns (
   id SERIAL PRIMARY KEY,
   office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
   item_id INTEGER REFERENCES inventory(id) ON DELETE CASCADE,
   quantity INTEGER NOT NULL,
   reason TEXT,
@@ -82,6 +88,7 @@ CREATE TABLE IF NOT EXISTS inventory_returns (
 CREATE TABLE IF NOT EXISTS inventory_damages (
   id SERIAL PRIMARY KEY,
   office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
   item_id INTEGER REFERENCES inventory(id) ON DELETE CASCADE,
   quantity INTEGER NOT NULL,
   reason TEXT,
@@ -92,6 +99,7 @@ CREATE TABLE IF NOT EXISTS inventory_damages (
 CREATE TABLE IF NOT EXISTS treasury_movements (
   id SERIAL PRIMARY KEY,
   office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
   type VARCHAR(20) NOT NULL CHECK (type IN ('deposit', 'withdraw')),
   source VARCHAR(30) NOT NULL CHECK (source IN ('cash', 'vodafone_cash', 'instapay')),
   amount DECIMAL(12,2) NOT NULL CHECK (amount > 0),
@@ -99,6 +107,15 @@ CREATE TABLE IF NOT EXISTS treasury_movements (
   date DATE DEFAULT CURRENT_DATE,
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE inventory ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE inventory_returns ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE inventory_damages ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE treasury_movements ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
     `);
 
     console.log('✅ All tables created successfully!');

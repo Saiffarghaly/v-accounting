@@ -217,6 +217,7 @@ const Dashboard = () => {
                       <th className="text-right pb-3" style={{ color: "#888" }}>التاريخ</th>
                       <th className="text-right pb-3" style={{ color: "#888" }}>المبلغ</th>
                       <th className="text-right pb-3" style={{ color: "#888" }}>النوع</th>
+                      <th className="text-right pb-3" style={{ color: "#888" }}>بواسطة</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -235,6 +236,7 @@ const Dashboard = () => {
                             {tx.type}
                           </span>
                         </td>
+                        <td className="py-3" style={{ color: "#888" }}>{tx.created_by_name || "—"}</td>
                       </tr>
                     ))}
                   </tbody>

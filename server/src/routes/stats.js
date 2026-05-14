@@ -9,14 +9,23 @@ const auth = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.officeId = decoded.officeId;
+    req.userId = decoded.userId || null;
     next();
   } catch {
     res.status(401).json({ error: 'Invalid token' });
   }
 };
 
+const ensureAuditColumn = async () => {
+  await pool.query(
+    'ALTER TABLE transactions ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL'
+  );
+};
+
 router.get('/', auth, async (req, res) => {
   try {
+    await ensureAuditColumn();
+
     const income = await pool.query(
       `SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE office_id = $1 AND type = 'إيراد'`,
       [req.officeId]
@@ -34,7 +43,12 @@ router.get('/', auth, async (req, res) => {
       [req.officeId]
     );
     const recentTransactions = await pool.query(
-      `SELECT * FROM transactions WHERE office_id = $1 ORDER BY created_at DESC LIMIT 5`,
+      `SELECT t.*, COALESCE(u.name, o.name) as created_by_name
+       FROM transactions t
+       LEFT JOIN users u ON t.created_by_user_id = u.id
+       LEFT JOIN offices o ON t.office_id = o.id
+       WHERE t.office_id = $1
+       ORDER BY t.created_at DESC LIMIT 5`,
       [req.officeId]
     );
     const monthlyData = await pool.query(
