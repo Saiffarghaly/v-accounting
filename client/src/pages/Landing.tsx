@@ -1,3 +1,5 @@
+import { BrandLogo } from "../components/BrandLogo";
+
 const Landing = ({
   onLogin,
   onRegister,
@@ -9,10 +11,10 @@ const Landing = ({
     <div className="min-h-screen bg-gray-100 text-gray-900">
 
       {/* Navbar */}
-      <nav className="border-b border-gray-300 px-8 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-[#217346]">
-          💼 V-ACCOUNTING
-        </h1>
+      <nav className="border-b border-gray-300 px-8 py-4 flex items-center justify-between bg-gray-100">
+        <div className="flex items-center min-w-0">
+          <BrandLogo size="compact" className="px-2 py-1" />
+        </div>
 
         <div className="flex items-center gap-4">
           <button
@@ -33,6 +35,10 @@ const Landing = ({
 
       {/* Hero */}
       <section className="text-center py-24 px-8">
+        <div className="flex justify-center mb-8">
+          <BrandLogo size="hero" className="px-5 py-3 rounded-2xl shadow-md" />
+        </div>
+
         <div className="inline-block bg-[#217346]/10 border border-[#217346]/20 text-[#217346] text-xs px-4 py-2 rounded-full mb-6">
           🚀 نظام محاسبة احترافي للمكاتب
         </div>

@@ -8,6 +8,7 @@ import ImportExcel from "./pages/ImportExcel";
 import Users from "./pages/Users";
 import Inventory from "./pages/Inventory";
 import Treasury from "./pages/Treasury";
+import { BrandLogo } from "./components/BrandLogo";
 
 interface Stats {
   income: number;
@@ -23,8 +24,6 @@ const Dashboard = () => {
   const { office, logout, token, canManageUsers } = useAuth();
   const [activePage, setActivePage] = useState("dashboard");
   const [stats, setStats] = useState<Stats | null>(null);
-  /** الشعار: `client/public/logo.png` */
-  const [sidebarLogoFailed, setSidebarLogoFailed] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -52,19 +51,9 @@ const Dashboard = () => {
       {/* Sidebar - Excel Green */}
       <aside className="w-64 flex flex-col" style={{ background: "#217346" }}>
         <div className="p-4" style={{ borderBottom: "1px solid #1a5c38" }}>
-          {!sidebarLogoFailed ? (
-            <img
-              src="/logo.png"
-              alt="V-accounting — محاسبة أسهل، قرارات أدق"
-              className="max-h-[7.5rem] w-full max-w-[13.5rem] object-contain mx-auto block"
-              onError={() => setSidebarLogoFailed(true)}
-            />
-          ) : (
-            <>
-              <h1 className="text-xl font-bold text-white">💼 V-ACCOUNTING</h1>
-              <p className="text-xs mt-2" style={{ color: "#a8d5b5" }}>نظام المحاسبة</p>
-            </>
-          )}
+          <div className="mx-auto w-full flex justify-center">
+            <BrandLogo size="sidebar" />
+          </div>
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
@@ -124,7 +113,13 @@ const Dashboard = () => {
         {/* Header - Excel Green */}
         <header className="px-8 py-4 flex items-center justify-between text-white"
           style={{ background: "#217346", borderBottom: "1px solid #1a5c38" }}>
-          <h2 className="text-lg font-semibold">
+          <div className="flex items-center gap-4 min-w-0">
+            {activePage === "dashboard" && (
+              <div className="shrink-0">
+                <BrandLogo size="compact" className="px-2 py-1" />
+              </div>
+            )}
+            <h2 className="text-lg font-semibold truncate">
             {activePage === "dashboard" && "لوحة التحكم"}
             {activePage === "income" && "الإيرادات"}
             {activePage === "expenses" && "المصروفات"}
@@ -136,6 +131,7 @@ const Dashboard = () => {
             {activePage === "users" && "المستخدمون"}
             {activePage === "inventory" && "المخزن"}
           </h2>
+          </div>
           <div className="flex items-center gap-3">
             <span className="text-sm" style={{ color: "#a8d5b5" }}>
               {new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
