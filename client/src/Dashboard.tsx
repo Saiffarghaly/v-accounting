@@ -23,6 +23,8 @@ const Dashboard = () => {
   const { office, logout, token, canManageUsers } = useAuth();
   const [activePage, setActivePage] = useState("dashboard");
   const [stats, setStats] = useState<Stats | null>(null);
+  /** الشعار: `client/public/logo.png` */
+  const [sidebarLogoFailed, setSidebarLogoFailed] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -49,9 +51,20 @@ const Dashboard = () => {
 
       {/* Sidebar - Excel Green */}
       <aside className="w-64 flex flex-col" style={{ background: "#217346" }}>
-        <div className="p-6" style={{ borderBottom: "1px solid #1a5c38" }}>
-          <h1 className="text-xl font-bold text-white">💼 V-ACCOUNTING</h1>
-          <p className="text-xs mt-1" style={{ color: "#a8d5b5" }}>نظام المحاسبة</p>
+        <div className="p-4" style={{ borderBottom: "1px solid #1a5c38" }}>
+          {!sidebarLogoFailed ? (
+            <img
+              src="/logo.png"
+              alt="V-accounting — محاسبة أسهل، قرارات أدق"
+              className="max-h-[7.5rem] w-full max-w-[13.5rem] object-contain mx-auto block"
+              onError={() => setSidebarLogoFailed(true)}
+            />
+          ) : (
+            <>
+              <h1 className="text-xl font-bold text-white">💼 V-ACCOUNTING</h1>
+              <p className="text-xs mt-2" style={{ color: "#a8d5b5" }}>نظام المحاسبة</p>
+            </>
+          )}
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
