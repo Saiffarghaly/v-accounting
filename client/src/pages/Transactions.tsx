@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { exportToExcel } from "../utils/exportExcel";
+import { matchesListSearch } from "../utils/listSearch";
+import { ListSearchField } from "../components/ListSearchField";
 
 interface Transaction {
   id: number;
@@ -20,6 +22,7 @@ const Transactions = () => {
   const { token, canEdit, canDelete } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [listSearch, setListSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     amount: "",
@@ -80,6 +83,27 @@ const Transactions = () => {
   const totalIncome = transactions.filter(t => t.type === "إيراد").reduce((s, t) => s + Number(t.amount), 0);
   const totalExpense = transactions.filter(t => t.type === "مصروف").reduce((s, t) => s + Number(t.amount), 0);
 
+  const filteredTransactions = useMemo(() => {
+    const dateStr = (d: string) => {
+      try {
+        return new Date(d).toLocaleDateString("ar-EG");
+      } catch {
+        return d;
+      }
+    };
+    return transactions.filter((t) =>
+      matchesListSearch(
+        listSearch,
+        t.description,
+        t.category,
+        t.type,
+        String(t.amount),
+        dateStr(t.date),
+        t.created_by_name
+      )
+    );
+  }, [transactions, listSearch]);
+
   return (
     <div className="p-8 space-y-6">
 
@@ -100,9 +124,10 @@ const Transactions = () => {
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-lg font-semibold" style={{ color: "#1a1a1a" }}>كل المعاملات</h3>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2 justify-end">
+          <ListSearchField variant="light" value={listSearch} onChange={setListSearch} placeholder="بحث في المعاملات…" />
           <button onClick={handleExport}
             className="text-white text-sm px-4 py-2 rounded-lg transition"
             style={{ background: "#388e3c" }}>
@@ -179,6 +204,11 @@ const Transactions = () => {
             <p className="text-3xl mb-2">📭</p>
             <p>لا توجد معاملات بعد</p>
           </div>
+        ) : filteredTransactions.length === 0 ? (
+          <div className="text-center py-8" style={{ color: "#bbb" }}>
+            <p className="text-3xl mb-2">🔎</p>
+            <p>لا توجد نتائج تطابق البحث</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table dir="rtl" lang="ar" className="w-full min-w-[44rem] border-collapse text-sm">
@@ -194,7 +224,7 @@ const Transactions = () => {
                 </tr>
               </thead>
               <tbody>
-                {transactions.map((tx) => (
+                {filteredTransactions.map((tx) => (
                   <tr key={tx.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
                     <td className="py-3 px-1 align-top" style={{ color: "#333" }}>{tx.description ?? "—"}</td>
                     <td className="py-3 px-1 align-top" style={{ color: "#888" }}>{tx.category}</td>

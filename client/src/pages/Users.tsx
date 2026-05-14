@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { matchesListSearch } from "../utils/listSearch";
+import { ListSearchField } from "../components/ListSearchField";
 
 interface User {
   id: number;
@@ -26,6 +28,7 @@ const roleLabel = (role: string) => {
 const Users = () => {
   const { token } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
+  const [listSearch, setListSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -69,21 +72,41 @@ const Users = () => {
     }
   };
 
+  const filteredUsers = useMemo(
+    () =>
+      users.filter((u) =>
+        matchesListSearch(
+          listSearch,
+          u.name,
+          u.email,
+          roleLabel(u.role),
+          new Date(u.created_at).toLocaleDateString("ar-EG"),
+          u.created_by_name
+        )
+      ),
+    [users, listSearch]
+  );
+
   return (
     <div className="p-8 space-y-6">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold">المستخدمون</h3>
-          <p className="text-sm text-gray-500">{users.length} مستخدم في المكتب</p>
+          <p className="text-sm text-gray-500">
+            {listSearch ? `عرض ${filteredUsers.length} من ${users.length} مستخدم` : `${users.length} مستخدم في المكتب`}
+          </p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition"
-        >
-          + إضافة مستخدم
-        </button>
+        <div className="flex flex-wrap items-center gap-2 justify-end">
+          <ListSearchField variant="dark" value={listSearch} onChange={setListSearch} placeholder="بحث في المستخدمين…" />
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition"
+          >
+            + إضافة مستخدم
+          </button>
+        </div>
       </div>
 
       {/* Roles Info */}
@@ -179,6 +202,11 @@ const Users = () => {
             <p className="text-3xl mb-2">👥</p>
             <p>لا يوجد مستخدمون بعد</p>
           </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="text-center text-gray-600 py-8">
+            <p className="text-3xl mb-2">🔎</p>
+            <p>لا توجد نتائج تطابق البحث</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table dir="rtl" lang="ar" className="w-full min-w-[40rem] border-collapse text-sm">
@@ -193,7 +221,7 @@ const Users = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800">
-                {users.map((user) => (
+                {filteredUsers.map((user) => (
                   <tr key={user.id} className="text-gray-300">
                     <td className="py-3 px-1 align-top font-medium">{user.name}</td>
                     <td className="py-3 px-1 align-top text-gray-500 break-all">{user.email}</td>

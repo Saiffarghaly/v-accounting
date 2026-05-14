@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../utils/api";
+import { matchesListSearch } from "../utils/listSearch";
+import { ListSearchField } from "../components/ListSearchField";
 
 interface TreasuryMovement {
   id: number;
@@ -55,6 +57,7 @@ const Treasury = () => {
   const [movements, setMovements] = useState<TreasuryMovement[]>([]);
   const [summary, setSummary] = useState<TreasurySummary>(emptySummary);
   const [showForm, setShowForm] = useState(false);
+  const [listSearch, setListSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
@@ -115,6 +118,22 @@ const Treasury = () => {
 
   const formatMoney = (value: number) => `${Number(value || 0).toLocaleString()} ج`;
 
+  const filteredMovements = useMemo(() => {
+    return movements.filter((m) => {
+      const typeAr = m.type === "deposit" ? "إيداع" : "سحب";
+      return matchesListSearch(
+        listSearch,
+        typeAr,
+        sourceLabels[m.source],
+        m.description,
+        new Date(m.date).toLocaleDateString("ar-EG"),
+        String(m.amount),
+        formatMoney(m.amount),
+        m.created_by_name
+      );
+    });
+  }, [movements, listSearch]);
+
   return (
     <div className="p-8 space-y-6">
       <div className="grid grid-cols-3 gap-4">
@@ -152,18 +171,25 @@ const Treasury = () => {
         ))}
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold" style={{ color: "#1a1a1a" }}>حركات الخزنة</h3>
-          <p className="text-sm" style={{ color: "#666" }}>{movements.length} حركة مسجلة</p>
+          <p className="text-sm" style={{ color: "#666" }}>
+            {listSearch
+              ? `عرض ${filteredMovements.length} من ${movements.length} حركة`
+              : `${movements.length} حركة مسجلة`}
+          </p>
         </div>
-        {canEdit && (
-          <button onClick={() => setShowForm(!showForm)}
+        <div className="flex flex-wrap items-center gap-2 justify-end">
+          <ListSearchField variant="light" value={listSearch} onChange={setListSearch} placeholder="بحث في الحركات…" />
+          {canEdit && (
+            <button onClick={() => setShowForm(!showForm)}
             className="text-white text-sm px-4 py-2 rounded-lg transition"
             style={{ background: "#217346" }}>
             + حركة خزنة
-          </button>
-        )}
+            </button>
+          )}
+        </div>
       </div>
 
       {canEdit && showForm && (
@@ -234,6 +260,11 @@ const Treasury = () => {
             <p className="text-3xl mb-2">💳</p>
             <p>لا توجد حركات خزنة بعد</p>
           </div>
+        ) : filteredMovements.length === 0 ? (
+          <div className="text-center py-8" style={{ color: "#bbb" }}>
+            <p className="text-3xl mb-2">🔎</p>
+            <p>لا توجد نتائج تطابق البحث</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table dir="rtl" lang="ar" className="w-full min-w-[44rem] border-collapse text-sm">
@@ -249,7 +280,7 @@ const Treasury = () => {
                 </tr>
               </thead>
               <tbody>
-                {movements.map((movement) => (
+                {filteredMovements.map((movement) => (
                   <tr key={movement.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
                     <td className="py-3 px-1 align-top">
                       <span className="text-xs px-2 py-1 rounded-full"

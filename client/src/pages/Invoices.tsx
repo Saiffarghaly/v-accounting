@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import jsPDF from "jspdf";
 import { exportToExcel } from "../utils/exportExcel";
+import { matchesListSearch } from "../utils/listSearch";
+import { ListSearchField } from "../components/ListSearchField";
 
 interface Invoice {
   id: number;
@@ -25,6 +27,7 @@ const Invoices = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [listSearch, setListSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ client_id: "", amount: "", status: "pending", due_date: "" });
 
@@ -158,6 +161,21 @@ const Invoices = () => {
   const paid = invoices.filter(i => i.status === "paid").reduce((s, i) => s + Number(i.amount), 0);
   const pending = invoices.filter(i => i.status === "pending").reduce((s, i) => s + Number(i.amount), 0);
 
+  const filteredInvoices = useMemo(() => {
+    return invoices.filter((inv) =>
+      matchesListSearch(
+        listSearch,
+        String(inv.id),
+        inv.client_name,
+        String(inv.amount),
+        statusLabel(inv.status),
+        inv.due_date ? new Date(inv.due_date).toLocaleDateString("ar-EG") : "",
+        new Date(inv.created_at).toLocaleDateString("ar-EG"),
+        inv.created_by_name
+      )
+    );
+  }, [invoices, listSearch]);
+
   return (
     <div className="p-8 space-y-6">
 
@@ -176,12 +194,15 @@ const Invoices = () => {
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold">الفواتير</h3>
-          <p className="text-sm text-gray-500">{invoices.length} فاتورة</p>
+          <p className="text-sm text-gray-500">
+            {listSearch ? `عرض ${filteredInvoices.length} من ${invoices.length} فاتورة` : `${invoices.length} فاتورة`}
+          </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2 justify-end">
+          <ListSearchField variant="dark" value={listSearch} onChange={setListSearch} placeholder="بحث في الفواتير…" />
           <button onClick={handleExport}
             className="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg transition">
             تصدير Excel ⬇
@@ -247,6 +268,11 @@ const Invoices = () => {
             <p className="text-3xl mb-2">🧾</p>
             <p>لا توجد فواتير بعد</p>
           </div>
+        ) : filteredInvoices.length === 0 ? (
+          <div className="text-center text-gray-600 py-8">
+            <p className="text-3xl mb-2">🔎</p>
+            <p>لا توجد نتائج تطابق البحث</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table dir="rtl" lang="ar" className="w-full min-w-[48rem] border-collapse text-sm">
@@ -262,7 +288,7 @@ const Invoices = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800">
-                {invoices.map((inv) => (
+                {filteredInvoices.map((inv) => (
                   <tr key={inv.id} className="text-gray-300">
                     <td className="py-3 px-1 align-top text-gray-500">#{inv.id}</td>
                     <td className="py-3 px-1 align-top font-medium">{inv.client_name}</td>

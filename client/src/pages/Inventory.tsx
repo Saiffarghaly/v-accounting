@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { exportToExcel } from "../utils/exportExcel";
+import { matchesListSearch } from "../utils/listSearch";
+import { ListSearchField } from "../components/ListSearchField";
 
 interface Item {
   id: number;
@@ -51,6 +53,7 @@ const Inventory = () => {
   const [damageForm, setDamageForm] = useState({ item_id: "", quantity: "", reason: "" });
   const [showReturnForm, setShowReturnForm] = useState(false);
   const [showDamageForm, setShowDamageForm] = useState(false);
+  const [listSearch, setListSearch] = useState("");
 
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -74,6 +77,10 @@ const Inventory = () => {
     fetchReturns();
     fetchDamages();
   }, []);
+
+  useEffect(() => {
+    setListSearch("");
+  }, [tab]);
 
   const handleAdd = async () => {
     if (!form.name || !form.quantity) return;
@@ -134,6 +141,56 @@ const Inventory = () => {
 
   const lowStock = items.filter(i => i.quantity <= i.min_quantity);
 
+  const filteredItems = useMemo(
+    () =>
+      items.filter((i) =>
+        matchesListSearch(
+          listSearch,
+          i.name,
+          i.category,
+          String(i.buy_price),
+          String(i.sell_wholesale),
+          String(i.sell_retail),
+          String(i.quantity),
+          i.unit,
+          i.quantity <= i.min_quantity ? "منخفض" : "متوفر",
+          i.created_by_name
+        )
+      ),
+    [items, listSearch]
+  );
+
+  const filteredReturns = useMemo(
+    () =>
+      returns.filter((r) =>
+        matchesListSearch(
+          listSearch,
+          r.item_name,
+          String(r.quantity),
+          r.type === "return" ? "من عميل" : "لمورد",
+          r.reason,
+          new Date(r.date).toLocaleDateString("ar-EG"),
+          r.created_by_name
+        )
+      ),
+    [returns, listSearch]
+  );
+
+  const filteredDamages = useMemo(
+    () =>
+      damages.filter((d) =>
+        matchesListSearch(
+          listSearch,
+          d.item_name,
+          String(d.quantity),
+          d.reason,
+          new Date(d.date).toLocaleDateString("ar-EG"),
+          d.created_by_name
+        )
+      ),
+    [damages, listSearch]
+  );
+
   return (
     <div className="p-8 space-y-6">
 
@@ -188,7 +245,8 @@ const Inventory = () => {
 
       {tab === "items" && (
         <div className="space-y-4">
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2 items-center">
+            <ListSearchField variant="dark" value={listSearch} onChange={setListSearch} placeholder="بحث في الأصناف…" />
             <button onClick={handleExport}
               className="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg transition">
               تصدير Excel ⬇
@@ -243,6 +301,11 @@ const Inventory = () => {
                 <p className="text-3xl mb-2">📦</p>
                 <p>لا توجد أصناف بعد</p>
               </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="text-center text-gray-600 py-8">
+                <p className="text-3xl mb-2">🔎</p>
+                <p>لا توجد نتائج تطابق البحث</p>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table dir="rtl" lang="ar" className="w-full min-w-[56rem] border-collapse text-sm">
@@ -260,7 +323,7 @@ const Inventory = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
-                    {items.map((item) => (
+                    {filteredItems.map((item) => (
                       <tr key={item.id} className="text-gray-300">
                         <td className="py-3 px-1 align-top font-medium">{item.name}</td>
                         <td className="py-3 px-1 align-top text-gray-500">{item.category || "—"}</td>
@@ -292,14 +355,15 @@ const Inventory = () => {
 
       {tab === "returns" && (
         <div className="space-y-4">
-          {canEdit && (
-            <div className="flex justify-end">
+          <div className="flex flex-wrap justify-end gap-2 items-center">
+            <ListSearchField variant="dark" value={listSearch} onChange={setListSearch} placeholder="بحث في المرتجعات…" />
+            {canEdit && (
               <button onClick={() => setShowReturnForm(!showReturnForm)}
                 className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg transition">
-              + تسجيل مرتجع
+                + تسجيل مرتجع
               </button>
-            </div>
-          )}
+            )}
+          </div>
 
           {canEdit && showReturnForm && (
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
@@ -349,6 +413,11 @@ const Inventory = () => {
                 <p className="text-3xl mb-2">↩️</p>
                 <p>لا توجد مرتجعات بعد</p>
               </div>
+            ) : filteredReturns.length === 0 ? (
+              <div className="text-center text-gray-600 py-8">
+                <p className="text-3xl mb-2">🔎</p>
+                <p>لا توجد نتائج تطابق البحث</p>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table dir="rtl" lang="ar" className="w-full min-w-[40rem] border-collapse text-sm">
@@ -363,7 +432,7 @@ const Inventory = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
-                    {returns.map((r) => (
+                    {filteredReturns.map((r) => (
                       <tr key={r.id} className="text-gray-300">
                         <td className="py-3 px-1 align-top font-medium">{r.item_name}</td>
                         <td className="py-3 px-1 align-top">{r.quantity}</td>
@@ -387,14 +456,15 @@ const Inventory = () => {
 
       {tab === "damages" && (
         <div className="space-y-4">
-          {canEdit && (
-            <div className="flex justify-end">
+          <div className="flex flex-wrap justify-end gap-2 items-center">
+            <ListSearchField variant="dark" value={listSearch} onChange={setListSearch} placeholder="بحث في الهوالك…" />
+            {canEdit && (
               <button onClick={() => setShowDamageForm(!showDamageForm)}
                 className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-lg transition">
-              + تسجيل هالك
+                + تسجيل هالك
               </button>
-            </div>
-          )}
+            )}
+          </div>
 
           {canEdit && showDamageForm && (
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
@@ -436,6 +506,11 @@ const Inventory = () => {
                 <p className="text-3xl mb-2">🗑️</p>
                 <p>لا توجد هوالك مسجلة</p>
               </div>
+            ) : filteredDamages.length === 0 ? (
+              <div className="text-center text-gray-600 py-8">
+                <p className="text-3xl mb-2">🔎</p>
+                <p>لا توجد نتائج تطابق البحث</p>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table dir="rtl" lang="ar" className="w-full min-w-[36rem] border-collapse text-sm">
@@ -449,7 +524,7 @@ const Inventory = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
-                    {damages.map((d) => (
+                    {filteredDamages.map((d) => (
                       <tr key={d.id} className="text-gray-300">
                         <td className="py-3 px-1 align-top font-medium">{d.item_name}</td>
                         <td className="py-3 px-1 align-top text-red-400">{d.quantity}</td>

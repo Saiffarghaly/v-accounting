@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { exportToExcel } from "../utils/exportExcel";
+import { matchesListSearch } from "../utils/listSearch";
+import { ListSearchField } from "../components/ListSearchField";
 
 interface Client {
   id: number;
@@ -15,6 +17,7 @@ interface Client {
 const Clients = () => {
   const { token, canEdit, canDelete } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
+  const [listSearch, setListSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", address: "" });
@@ -59,15 +62,28 @@ const Clients = () => {
     exportToExcel(data, "العملاء", "العملاء");
   };
 
+  const filteredClients = useMemo(
+    () =>
+      clients.filter((c) =>
+        matchesListSearch(listSearch, c.name, c.email, c.phone, c.address, c.created_by_name)
+      ),
+    [clients, listSearch]
+  );
+
   return (
     <div className="p-8 space-y-6">
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold">العملاء</h3>
-          <p className="text-sm text-gray-500">{clients.length} عميل مسجل</p>
+          <p className="text-sm text-gray-500">
+            {listSearch
+              ? `عرض ${filteredClients.length} من ${clients.length} عميل`
+              : `${clients.length} عميل مسجل`}
+          </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2 justify-end">
+          <ListSearchField variant="dark" value={listSearch} onChange={setListSearch} placeholder="بحث في العملاء…" />
           <button onClick={handleExport}
             className="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg transition">
             تصدير Excel ⬇
@@ -128,9 +144,14 @@ const Clients = () => {
           <p className="text-4xl mb-3">👥</p>
           <p>لا يوجد عملاء بعد</p>
         </div>
+      ) : filteredClients.length === 0 ? (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-12 text-center text-gray-600">
+          <p className="text-4xl mb-3">🔎</p>
+          <p>لا توجد نتائج تطابق البحث</p>
+        </div>
       ) : (
         <div className="grid grid-cols-3 gap-4">
-          {clients.map((client) => (
+          {filteredClients.map((client) => (
             <div key={client.id} className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import * as XLSX from "xlsx";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { matchesListSearch } from "../utils/listSearch";
+import { ListSearchField } from "../components/ListSearchField";
 
 type Destination = "transactions" | "clients" | "inventory" | "";
 
@@ -16,6 +18,7 @@ const ImportExcel = () => {
   const [success, setSuccess] = useState(0);
   const [error, setError] = useState("");
   const [step, setStep] = useState<"destination" | "upload" | "map" | "done">("destination");
+  const [listSearch, setListSearch] = useState("");
 
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -62,6 +65,7 @@ const ImportExcel = () => {
       if (json.length === 0) { setError("الملف فاضي!"); return; }
       setColumns(Object.keys(json[0]));
       setRawData(json);
+      setListSearch("");
       setStep("map");
       setError("");
       setSuccess(0);
@@ -139,7 +143,20 @@ const ImportExcel = () => {
     setMapping({});
     setSuccess(0);
     setError("");
+    setListSearch("");
   };
+
+  const filteredPreviewRows = useMemo(() => {
+    if (!listSearch.trim() || columns.length === 0) return rawData;
+    return rawData.filter((row) =>
+      matchesListSearch(
+        listSearch,
+        ...columns.map((col) => row[col])
+      )
+    );
+  }, [rawData, columns, listSearch]);
+
+  const previewRows = filteredPreviewRows.slice(0, 20);
 
   const stepLabels = ["اختر الوجهة", "رفع الملف", "تحديد الأعمدة", "تم"];
   const stepKeys = ["destination", "upload", "map", "done"];
@@ -224,6 +241,15 @@ const ImportExcel = () => {
             <h4 className="font-medium text-gray-300">حدد إيه كل عمود</h4>
             <p className="text-sm text-gray-500">الملف عنده {rawData.length} صف و {columns.length} عمود</p>
 
+            <div className="flex flex-wrap items-center gap-2">
+              <ListSearchField variant="dark" value={listSearch} onChange={setListSearch} placeholder="بحث في معاينة الصفوف…" />
+              {listSearch.trim() ? (
+                <span className="text-xs text-gray-500">
+                  {filteredPreviewRows.length} صف يطابق البحث (المعاينة أول 20 منها؛ الاستيراد لكل {rawData.length} صف)
+                </span>
+              ) : null}
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               {(fieldsByDestination[destination] || []).map((field) => (
                 <div key={field.key}>
@@ -252,7 +278,7 @@ const ImportExcel = () => {
             {error && <p className="text-red-400 text-sm">{error}</p>}
 
             <div className="overflow-x-auto">
-              <p className="text-xs text-gray-500 mb-2">معاينة أول 3 صفوف:</p>
+              <p className="text-xs text-gray-500 mb-2">معاينة أول 20 صفًا من نتائج البحث (أو من الملف إن لم يُستخدم البحث):</p>
               <table className="w-full text-xs">
                 <thead>
                   <tr className="text-gray-500 border-b border-gray-800">
@@ -260,11 +286,19 @@ const ImportExcel = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {rawData.slice(0, 3).map((row, i) => (
-                    <tr key={i} className="text-gray-400 border-b border-gray-800/50">
-                      {columns.map(col => <td key={col} className="py-2 px-2">{String(row[col] || "")}</td>)}
+                  {previewRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={Math.max(columns.length, 1)} className="py-6 text-center text-gray-500">
+                        لا توجد نتائج تطابق البحث
+                      </td>
                     </tr>
-                  ))}
+                  ) : (
+                    previewRows.map((row, i) => (
+                      <tr key={i} className="text-gray-400 border-b border-gray-800/50">
+                        {columns.map(col => <td key={col} className="py-2 px-2">{String(row[col] || "")}</td>)}
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
