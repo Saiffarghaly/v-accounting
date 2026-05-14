@@ -3,6 +3,27 @@ const pool = require('./db');
 const migrate = async () => {
   try {
     await pool.query(`
+      CREATE TABLE IF NOT EXISTS suppliers (
+  id SERIAL PRIMARY KEY,
+  office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255),
+  phone VARCHAR(50),
+  address TEXT,
+  balance DECIMAL(12,2) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS supplier_transactions (
+  id SERIAL PRIMARY KEY,
+  office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  supplier_id INTEGER REFERENCES suppliers(id) ON DELETE CASCADE,
+  amount DECIMAL(12,2) NOT NULL,
+  type VARCHAR(20) NOT NULL,
+  description TEXT,
+  date DATE DEFAULT CURRENT_DATE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
       CREATE TABLE IF NOT EXISTS offices (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,

@@ -9,6 +9,7 @@ import Users from "./pages/Users";
 import Inventory from "./pages/Inventory";
 import Treasury from "./pages/Treasury";
 import { BrandWordmark } from "./components/BrandWordmark";
+import Suppliers from "./pages/Suppliers";
 
 interface Stats {
   income: number;
@@ -68,6 +69,7 @@ const Dashboard = () => {
             { id: "users", label: "المستخدمون", icon: "👤" },
             { id: "inventory", label: "المخزن", icon: "📦" },
             { id: "reports", label: "التقارير", icon: "📈" },
+            { id: "suppliers", label: "الموردين", icon: "🚚" },
           ].filter((item) => item.id !== "users" || canManageUsers).map((item) => (
             <button
               key={item.id}
@@ -130,6 +132,7 @@ const Dashboard = () => {
             {activePage === "treasury" && "الخزنة"}
             {activePage === "users" && "المستخدمون"}
             {activePage === "inventory" && "المخزن"}
+            {activePage === "suppliers" && "الموردين"}
           </h2>
           </div>
           <div className="flex items-center gap-3">
@@ -269,8 +272,9 @@ const Dashboard = () => {
         {activePage === "treasury" && <Treasury />}
         {canManageUsers && activePage === "users" && <Users />}
         {activePage === "inventory" && <Inventory />}
+        {activePage === "suppliers" && <Suppliers />}
 
-        {activePage !== "dashboard" && activePage !== "income" && activePage !== "expenses" && activePage !== "clients" && activePage !== "invoices" && activePage !== "import" && activePage !== "treasury" && activePage !== "users" && activePage !== "inventory" && (
+        {activePage !== "dashboard" && activePage !== "income" && activePage !== "expenses" && activePage !== "clients" && activePage !== "invoices" && activePage !== "import" && activePage !== "treasury" && activePage !== "users" && activePage !== "inventory" && activePage !== "suppliers" &&(
           <div className="flex items-center justify-center h-full" style={{ color: "#bbb" }}>
             <div className="text-center">
               <p className="text-4xl mb-3">🚧</p>

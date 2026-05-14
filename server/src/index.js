@@ -34,3 +34,5 @@ const inventoryRoutes = require('./routes/inventory');
 app.use('/api/inventory', inventoryRoutes);
 const treasuryRoutes = require('./routes/treasury');
 app.use('/api/treasury', treasuryRoutes);
+const supplierRoutes = require('./routes/suppliers');
+app.use('/api/suppliers', supplierRoutes);
