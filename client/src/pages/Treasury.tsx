@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../utils/api";
 
 interface TreasuryMovement {
   id: number;
@@ -24,8 +25,6 @@ interface TreasurySummary {
   balance: number;
   sources: Record<TreasuryMovement["source"], SourceSummary>;
 }
-
-const API = "https://v-accounting-production.up.railway.app";
 
 const sourceLabels: Record<TreasuryMovement["source"], string> = {
   cash: "نقدي",
@@ -69,11 +68,11 @@ const Treasury = () => {
 
   const fetchTreasury = async () => {
     try {
-      const res = await axios.get(`${API}/api/treasury`, { headers });
+      const res = await axios.get(`${API_URL}/api/treasury`, { headers });
       setMovements(res.data.movements || []);
       setSummary(res.data.summary || emptySummary);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "تعذر تحميل بيانات الخزنة");
     }
   };
 
@@ -86,7 +85,7 @@ const Treasury = () => {
     setError("");
     setLoading(true);
     try {
-      await axios.post(`${API}/api/treasury`, form, { headers });
+      await axios.post(`${API_URL}/api/treasury`, form, { headers });
       setForm({
         type: "deposit",
         source: "cash",
@@ -98,7 +97,7 @@ const Treasury = () => {
       fetchTreasury();
     } catch (err: any) {
       const apiError = err.response?.data?.error;
-      setError(apiError === "Insufficient source balance" ? "الرصيد غير كافي في مصدر الفلوس المحدد" : "تعذر حفظ حركة الخزنة");
+      setError(apiError === "Insufficient source balance" ? "الرصيد غير كافي في مصدر الفلوس المحدد" : apiError || "تعذر حفظ حركة الخزنة");
     } finally {
       setLoading(false);
     }
@@ -106,7 +105,7 @@ const Treasury = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`${API}/api/treasury/${id}`, { headers });
+      await axios.delete(`${API_URL}/api/treasury/${id}`, { headers });
       fetchTreasury();
     } catch (err) {
       console.error(err);

@@ -18,7 +18,24 @@ const auth = (req, res, next) => {
 const allowedTypes = ['deposit', 'withdraw'];
 const allowedSources = ['cash', 'vodafone_cash', 'instapay'];
 
+const ensureTreasuryTable = async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS treasury_movements (
+      id SERIAL PRIMARY KEY,
+      office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+      type VARCHAR(20) NOT NULL CHECK (type IN ('deposit', 'withdraw')),
+      source VARCHAR(30) NOT NULL CHECK (source IN ('cash', 'vodafone_cash', 'instapay')),
+      amount DECIMAL(12,2) NOT NULL CHECK (amount > 0),
+      description TEXT,
+      date DATE DEFAULT CURRENT_DATE,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+};
+
 const getSummary = async (officeId) => {
+  await ensureTreasuryTable();
+
   const totals = await pool.query(
     `SELECT
        COALESCE(SUM(CASE WHEN type = 'deposit' THEN amount ELSE 0 END), 0) AS total_deposits,
@@ -64,6 +81,8 @@ const getSummary = async (officeId) => {
 
 router.get('/', auth, async (req, res) => {
   try {
+    await ensureTreasuryTable();
+
     const movements = await pool.query(
       'SELECT * FROM treasury_movements WHERE office_id = $1 ORDER BY date DESC, created_at DESC',
       [req.officeId]
@@ -91,6 +110,8 @@ router.post('/', auth, async (req, res) => {
   }
 
   try {
+    await ensureTreasuryTable();
+
     if (type === 'withdraw') {
       const balanceResult = await pool.query(
         `SELECT COALESCE(SUM(CASE WHEN type = 'deposit' THEN amount ELSE -amount END), 0) AS balance
@@ -106,7 +127,7 @@ router.post('/', auth, async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO treasury_movements (office_id, type, source, amount, description, date)
-       VALUES ($1, $2, $3, $4, $5, COALESCE($6, CURRENT_DATE))
+       VALUES ($1, $2, $3, $4, $5, COALESCE($6::date, CURRENT_DATE))
        RETURNING *`,
       [req.officeId, type, source, value, description || '', date || null]
     );
@@ -119,6 +140,8 @@ router.post('/', auth, async (req, res) => {
 
 router.delete('/:id', auth, async (req, res) => {
   try {
+    await ensureTreasuryTable();
+
     await pool.query(
       'DELETE FROM treasury_movements WHERE id = $1 AND office_id = $2',
       [req.params.id, req.officeId]
