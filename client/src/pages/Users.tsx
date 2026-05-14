@@ -1,8 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
-import { matchesListSearch } from "../utils/listSearch";
-import { ListSearchField } from "../components/ListSearchField";
 
 interface User {
   id: number;
@@ -10,7 +8,6 @@ interface User {
   email: string;
   role: string;
   created_at: string;
-  created_by_name?: string;
 }
 
 const roleColor = (role: string) => {
@@ -28,7 +25,6 @@ const roleLabel = (role: string) => {
 const Users = () => {
   const { token } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
-  const [listSearch, setListSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -38,7 +34,7 @@ const Users = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("https://v-accounting-production.up.railway.app/api/users", { headers });
+      const res = await axios.get("${import.meta.env.VITE_API_URL}/api/users", { headers });
       setUsers(res.data);
     } catch (err) {
       console.error(err);
@@ -52,7 +48,7 @@ const Users = () => {
     setLoading(true);
     setError("");
     try {
-      await axios.post("https://v-accounting-production.up.railway.app/api/users", form, { headers });
+      await axios.post("${import.meta.env.VITE_API_URL}/api/users", form, { headers });
       setForm({ name: "", email: "", password: "", role: "accountant" });
       setShowForm(false);
       fetchUsers();
@@ -65,48 +61,28 @@ const Users = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`https://v-accounting-production.up.railway.app/api/users/${id}`, { headers });
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/users/${id}`, { headers });
       fetchUsers();
     } catch (err) {
       console.error(err);
     }
   };
 
-  const filteredUsers = useMemo(
-    () =>
-      users.filter((u) =>
-        matchesListSearch(
-          listSearch,
-          u.name,
-          u.email,
-          roleLabel(u.role),
-          new Date(u.created_at).toLocaleDateString("ar-EG"),
-          u.created_by_name
-        )
-      ),
-    [users, listSearch]
-  );
-
   return (
     <div className="p-8 space-y-6">
 
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">المستخدمون</h3>
-          <p className="text-sm text-gray-500">
-            {listSearch ? `عرض ${filteredUsers.length} من ${users.length} مستخدم` : `${users.length} مستخدم في المكتب`}
-          </p>
+          <p className="text-sm text-gray-500">{users.length} مستخدم في المكتب</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 justify-end">
-          <ListSearchField variant="dark" value={listSearch} onChange={setListSearch} placeholder="بحث في المستخدمين…" />
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition"
-          >
-            + إضافة مستخدم
-          </button>
-        </div>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition"
+        >
+          + إضافة مستخدم
+        </button>
       </div>
 
       {/* Roles Info */}
@@ -202,51 +178,42 @@ const Users = () => {
             <p className="text-3xl mb-2">👥</p>
             <p>لا يوجد مستخدمون بعد</p>
           </div>
-        ) : filteredUsers.length === 0 ? (
-          <div className="text-center text-gray-600 py-8">
-            <p className="text-3xl mb-2">🔎</p>
-            <p>لا توجد نتائج تطابق البحث</p>
-          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table dir="rtl" lang="ar" className="w-full min-w-[40rem] border-collapse text-sm">
-              <thead>
-                <tr className="text-gray-500 border-b border-gray-800">
-                  <th className="text-right pb-3 px-1">الاسم</th>
-                  <th className="text-right pb-3 px-1">البريد الإلكتروني</th>
-                  <th className="text-right pb-3 px-1">الدور</th>
-                  <th className="text-right pb-3 px-1">تاريخ الإضافة</th>
-                  <th className="text-right pb-3 px-1">بواسطة</th>
-                  <th className="text-right pb-3 px-1 w-14"></th>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-gray-500 border-b border-gray-800">
+                <th className="text-right pb-3">الاسم</th>
+                <th className="text-right pb-3">البريد الإلكتروني</th>
+                <th className="text-right pb-3">الدور</th>
+                <th className="text-right pb-3">تاريخ الإضافة</th>
+                <th className="text-right pb-3"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-800">
+              {users.map((user) => (
+                <tr key={user.id} className="text-gray-300">
+                  <td className="py-3 font-medium">{user.name}</td>
+                  <td className="py-3 text-gray-500">{user.email}</td>
+                  <td className="py-3">
+                    <span className={`text-xs px-2 py-1 rounded-full ${roleColor(user.role)}`}>
+                      {roleLabel(user.role)}
+                    </span>
+                  </td>
+                  <td className="py-3 text-gray-500">
+                    {new Date(user.created_at).toLocaleDateString('ar-EG')}
+                  </td>
+                  <td className="py-3">
+                    <button
+                      onClick={() => handleDelete(user.id)}
+                      className="text-gray-600 hover:text-red-400 transition text-xs"
+                    >
+                      حذف
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800">
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="text-gray-300">
-                    <td className="py-3 px-1 align-top font-medium">{user.name}</td>
-                    <td className="py-3 px-1 align-top text-gray-500 break-all">{user.email}</td>
-                    <td className="py-3 px-1 align-top">
-                      <span className={`text-xs px-2 py-1 rounded-full ${roleColor(user.role)}`}>
-                        {roleLabel(user.role)}
-                      </span>
-                    </td>
-                    <td className="py-3 px-1 align-top text-gray-500 whitespace-nowrap">
-                      {new Date(user.created_at).toLocaleDateString('ar-EG')}
-                    </td>
-                    <td className="py-3 px-1 align-top text-gray-500 whitespace-nowrap">{user.created_by_name || "—"}</td>
-                    <td className="py-3 px-1 align-top">
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        className="text-gray-600 hover:text-red-400 transition text-xs"
-                      >
-                        حذف
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
     </div>

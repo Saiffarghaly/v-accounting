@@ -1,10 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import jsPDF from "jspdf";
 import { exportToExcel } from "../utils/exportExcel";
-import { matchesListSearch } from "../utils/listSearch";
-import { ListSearchField } from "../components/ListSearchField";
 
 interface Invoice {
   id: number;
@@ -14,7 +12,6 @@ interface Invoice {
   status: string;
   due_date: string;
   created_at: string;
-  created_by_name?: string;
 }
 
 interface Client {
@@ -23,11 +20,10 @@ interface Client {
 }
 
 const Invoices = () => {
-  const { token, canEdit, canDelete } = useAuth();
+  const { token } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [listSearch, setListSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ client_id: "", amount: "", status: "pending", due_date: "" });
 
@@ -35,14 +31,14 @@ const Invoices = () => {
 
   const fetchInvoices = async () => {
     try {
-      const res = await axios.get("https://v-accounting-production.up.railway.app/api/invoices", { headers });
+      const res = await axios.get("${import.meta.env.VITE_API_URL}/api/invoices", { headers });
       setInvoices(res.data);
     } catch (err) { console.error(err); }
   };
 
   const fetchClients = async () => {
     try {
-      const res = await axios.get("https://v-accounting-production.up.railway.app/api/clients", { headers });
+      const res = await axios.get("${import.meta.env.VITE_API_URL}/api/clients", { headers });
       setClients(res.data);
     } catch (err) { console.error(err); }
   };
@@ -53,7 +49,7 @@ const Invoices = () => {
     if (!form.client_id || !form.amount) return;
     setLoading(true);
     try {
-      await axios.post("https://v-accounting-production.up.railway.app/api/invoices", form, { headers });
+      await axios.post("${import.meta.env.VITE_API_URL}/api/invoices", form, { headers });
       setForm({ client_id: "", amount: "", status: "pending", due_date: "" });
       setShowForm(false);
       fetchInvoices();
@@ -63,14 +59,14 @@ const Invoices = () => {
 
   const handleStatusChange = async (id: number, status: string) => {
     try {
-      await axios.patch(`https://v-accounting-production.up.railway.app/api/invoices/${id}`, { status }, { headers });
+      await axios.patch(`${import.meta.env.VITE_API_URL}/api/invoices/${id}`, { status }, { headers });
       fetchInvoices();
     } catch (err) { console.error(err); }
   };
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`https://v-accounting-production.up.railway.app/api/invoices/${id}`, { headers });
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/invoices/${id}`, { headers });
       fetchInvoices();
     } catch (err) { console.error(err); }
   };
@@ -151,30 +147,9 @@ const Invoices = () => {
     return "bg-yellow-400/10 text-yellow-400";
   };
 
-  const statusLabel = (status: string) => {
-    if (status === "paid") return "مدفوع";
-    if (status === "overdue") return "متأخر";
-    return "معلق";
-  };
-
   const total = invoices.reduce((s, i) => s + Number(i.amount), 0);
   const paid = invoices.filter(i => i.status === "paid").reduce((s, i) => s + Number(i.amount), 0);
   const pending = invoices.filter(i => i.status === "pending").reduce((s, i) => s + Number(i.amount), 0);
-
-  const filteredInvoices = useMemo(() => {
-    return invoices.filter((inv) =>
-      matchesListSearch(
-        listSearch,
-        String(inv.id),
-        inv.client_name,
-        String(inv.amount),
-        statusLabel(inv.status),
-        inv.due_date ? new Date(inv.due_date).toLocaleDateString("ar-EG") : "",
-        new Date(inv.created_at).toLocaleDateString("ar-EG"),
-        inv.created_by_name
-      )
-    );
-  }, [invoices, listSearch]);
 
   return (
     <div className="p-8 space-y-6">
@@ -194,29 +169,24 @@ const Invoices = () => {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">الفواتير</h3>
-          <p className="text-sm text-gray-500">
-            {listSearch ? `عرض ${filteredInvoices.length} من ${invoices.length} فاتورة` : `${invoices.length} فاتورة`}
-          </p>
+          <p className="text-sm text-gray-500">{invoices.length} فاتورة</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 justify-end">
-          <ListSearchField variant="dark" value={listSearch} onChange={setListSearch} placeholder="بحث في الفواتير…" />
+        <div className="flex gap-2">
           <button onClick={handleExport}
             className="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg transition">
             تصدير Excel ⬇
           </button>
-          {canEdit && (
-            <button onClick={() => setShowForm(!showForm)}
-              className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg transition">
+          <button onClick={() => setShowForm(!showForm)}
+            className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg transition">
             + فاتورة جديدة
-            </button>
-          )}
+          </button>
         </div>
       </div>
 
-      {canEdit && showForm && (
+      {showForm && (
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
           <h4 className="font-medium text-gray-300">فاتورة جديدة</h4>
           <div className="grid grid-cols-2 gap-4">
@@ -268,62 +238,43 @@ const Invoices = () => {
             <p className="text-3xl mb-2">🧾</p>
             <p>لا توجد فواتير بعد</p>
           </div>
-        ) : filteredInvoices.length === 0 ? (
-          <div className="text-center text-gray-600 py-8">
-            <p className="text-3xl mb-2">🔎</p>
-            <p>لا توجد نتائج تطابق البحث</p>
-          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table dir="rtl" lang="ar" className="w-full min-w-[48rem] border-collapse text-sm">
-              <thead>
-                <tr className="text-gray-500 border-b border-gray-800">
-                  <th className="text-right pb-3 px-1">#</th>
-                  <th className="text-right pb-3 px-1">العميل</th>
-                  <th className="text-right pb-3 px-1">المبلغ</th>
-                  <th className="text-right pb-3 px-1">الاستحقاق</th>
-                  <th className="text-right pb-3 px-1">الحالة</th>
-                  <th className="text-right pb-3 px-1">بواسطة</th>
-                  <th className="text-right pb-3 px-1 w-20"></th>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-gray-500 border-b border-gray-800">
+                <th className="text-right pb-3">#</th>
+                <th className="text-right pb-3">العميل</th>
+                <th className="text-right pb-3">المبلغ</th>
+                <th className="text-right pb-3">الاستحقاق</th>
+                <th className="text-right pb-3">الحالة</th>
+                <th className="text-right pb-3"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-800">
+              {invoices.map((inv) => (
+                <tr key={inv.id} className="text-gray-300">
+                  <td className="py-3 text-gray-500">#{inv.id}</td>
+                  <td className="py-3 font-medium">{inv.client_name}</td>
+                  <td className="py-3">{Number(inv.amount).toLocaleString()} ج</td>
+                  <td className="py-3 text-gray-500">{inv.due_date ? new Date(inv.due_date).toLocaleDateString('ar-EG') : "—"}</td>
+                  <td className="py-3">
+                    <select value={inv.status} onChange={(e) => handleStatusChange(inv.id, e.target.value)}
+                      className={`text-xs px-2 py-1 rounded-full border-0 cursor-pointer ${statusColor(inv.status)}`}>
+                      <option value="pending">معلق</option>
+                      <option value="paid">مدفوع</option>
+                      <option value="overdue">متأخر</option>
+                    </select>
+                  </td>
+                  <td className="py-3 flex gap-3">
+                    <button onClick={() => exportPDF(inv)}
+                      className="text-gray-600 hover:text-amber-400 transition text-xs">PDF</button>
+                    <button onClick={() => handleDelete(inv.id)}
+                      className="text-gray-600 hover:text-red-400 transition text-xs">حذف</button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800">
-                {filteredInvoices.map((inv) => (
-                  <tr key={inv.id} className="text-gray-300">
-                    <td className="py-3 px-1 align-top text-gray-500">#{inv.id}</td>
-                    <td className="py-3 px-1 align-top font-medium">{inv.client_name}</td>
-                    <td className="py-3 px-1 align-top whitespace-nowrap">{Number(inv.amount).toLocaleString()} ج</td>
-                    <td className="py-3 px-1 align-top text-gray-500">{inv.due_date ? new Date(inv.due_date).toLocaleDateString('ar-EG') : "—"}</td>
-                    <td className="py-3 px-1 align-top">
-                      {canEdit ? (
-                        <select value={inv.status} onChange={(e) => handleStatusChange(inv.id, e.target.value)}
-                          className={`text-xs px-2 py-1 rounded-full border-0 cursor-pointer ${statusColor(inv.status)}`}>
-                          <option value="pending">معلق</option>
-                          <option value="paid">مدفوع</option>
-                          <option value="overdue">متأخر</option>
-                        </select>
-                      ) : (
-                        <span className={`text-xs px-2 py-1 rounded-full ${statusColor(inv.status)}`}>
-                          {statusLabel(inv.status)}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 px-1 align-top text-gray-500 whitespace-nowrap">{inv.created_by_name || "—"}</td>
-                    <td className="py-3 px-1 align-top">
-                      <div className="inline-flex gap-3 flex-nowrap">
-                        <button onClick={() => exportPDF(inv)}
-                          className="text-gray-600 hover:text-amber-400 transition text-xs">PDF</button>
-                        {canDelete && (
-                          <button onClick={() => handleDelete(inv.id)}
-                            className="text-gray-600 hover:text-red-400 transition text-xs">حذف</button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
     </div>

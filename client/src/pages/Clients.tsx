@@ -1,9 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { exportToExcel } from "../utils/exportExcel";
-import { matchesListSearch } from "../utils/listSearch";
-import { ListSearchField } from "../components/ListSearchField";
 
 interface Client {
   id: number;
@@ -11,13 +9,11 @@ interface Client {
   email: string;
   phone: string;
   address: string;
-  created_by_name?: string;
 }
 
 const Clients = () => {
-  const { token, canEdit, canDelete } = useAuth();
+  const { token } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
-  const [listSearch, setListSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", address: "" });
@@ -26,7 +22,7 @@ const Clients = () => {
 
   const fetchClients = async () => {
     try {
-      const res = await axios.get("https://v-accounting-production.up.railway.app/api/clients", { headers });
+      const res = await axios.get("${import.meta.env.VITE_API_URL}/api/clients", { headers });
       setClients(res.data);
     } catch (err) { console.error(err); }
   };
@@ -37,7 +33,7 @@ const Clients = () => {
     if (!form.name) return;
     setLoading(true);
     try {
-      await axios.post("https://v-accounting-production.up.railway.app/api/clients", form, { headers });
+      await axios.post("${import.meta.env.VITE_API_URL}/api/clients", form, { headers });
       setForm({ name: "", email: "", phone: "", address: "" });
       setShowForm(false);
       fetchClients();
@@ -47,7 +43,7 @@ const Clients = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`https://v-accounting-production.up.railway.app/api/clients/${id}`, { headers });
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/clients/${id}`, { headers });
       fetchClients();
     } catch (err) { console.error(err); }
   };
@@ -62,42 +58,27 @@ const Clients = () => {
     exportToExcel(data, "العملاء", "العملاء");
   };
 
-  const filteredClients = useMemo(
-    () =>
-      clients.filter((c) =>
-        matchesListSearch(listSearch, c.name, c.email, c.phone, c.address, c.created_by_name)
-      ),
-    [clients, listSearch]
-  );
-
   return (
     <div className="p-8 space-y-6">
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">العملاء</h3>
-          <p className="text-sm text-gray-500">
-            {listSearch
-              ? `عرض ${filteredClients.length} من ${clients.length} عميل`
-              : `${clients.length} عميل مسجل`}
-          </p>
+          <p className="text-sm text-gray-500">{clients.length} عميل مسجل</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 justify-end">
-          <ListSearchField variant="dark" value={listSearch} onChange={setListSearch} placeholder="بحث في العملاء…" />
+        <div className="flex gap-2">
           <button onClick={handleExport}
             className="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg transition">
             تصدير Excel ⬇
           </button>
-          {canEdit && (
-            <button onClick={() => setShowForm(!showForm)}
-              className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg transition">
+          <button onClick={() => setShowForm(!showForm)}
+            className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg transition">
             + إضافة عميل
-            </button>
-          )}
+          </button>
         </div>
       </div>
 
-      {canEdit && showForm && (
+      {showForm && (
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
           <h4 className="font-medium text-gray-300">عميل جديد</h4>
           <div className="grid grid-cols-2 gap-4">
@@ -144,14 +125,9 @@ const Clients = () => {
           <p className="text-4xl mb-3">👥</p>
           <p>لا يوجد عملاء بعد</p>
         </div>
-      ) : filteredClients.length === 0 ? (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-12 text-center text-gray-600">
-          <p className="text-4xl mb-3">🔎</p>
-          <p>لا توجد نتائج تطابق البحث</p>
-        </div>
       ) : (
         <div className="grid grid-cols-3 gap-4">
-          {filteredClients.map((client) => (
+          {clients.map((client) => (
             <div key={client.id} className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -160,17 +136,14 @@ const Clients = () => {
                   </div>
                   <p className="font-medium">{client.name}</p>
                 </div>
-                {canDelete && (
-                  <button onClick={() => handleDelete(client.id)}
-                    className="text-gray-600 hover:text-red-400 transition text-xs">
+                <button onClick={() => handleDelete(client.id)}
+                  className="text-gray-600 hover:text-red-400 transition text-xs">
                   حذف
-                  </button>
-                )}
+                </button>
               </div>
               {client.email && <p className="text-sm text-gray-500">📧 {client.email}</p>}
               {client.phone && <p className="text-sm text-gray-500">📞 {client.phone}</p>}
               {client.address && <p className="text-sm text-gray-500">📍 {client.address}</p>}
-              <p className="text-xs text-gray-600">بواسطة: {client.created_by_name || "—"}</p>
             </div>
           ))}
         </div>
