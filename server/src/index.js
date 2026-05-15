@@ -38,3 +38,7 @@ const supplierRoutes = require('./suppliers');
 app.use('/api/suppliers', supplierRoutes);
 const salariesRoutes = require('./routes/salaries');
 app.use('/api/salaries', salariesRoutes);
+const debtsRoutes = require('./routes/debts');
+app.use('/api/debts', debtsRoutes);
+const alertsRoutes = require('./routes/alerts');
+app.use('/api/alerts', alertsRoutes);

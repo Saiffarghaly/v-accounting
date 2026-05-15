@@ -138,6 +138,28 @@ ALTER TABLE inventory_returns ADD COLUMN IF NOT EXISTS created_by_user_id INTEGE
 ALTER TABLE inventory_damages ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
 ALTER TABLE treasury_movements ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
 
+CREATE TABLE IF NOT EXISTS client_debts (
+  id SERIAL PRIMARY KEY,
+  office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
+  amount DECIMAL(12,2) NOT NULL,
+  remaining DECIMAL(12,2) NOT NULL,
+  description TEXT,
+  due_date DATE,
+  status VARCHAR(20) DEFAULT 'active',
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS debt_payments (
+  id SERIAL PRIMARY KEY,
+  office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  debt_id INTEGER REFERENCES client_debts(id) ON DELETE CASCADE,
+  amount DECIMAL(12,2) NOT NULL,
+  date DATE DEFAULT CURRENT_DATE,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS employees (
   id SERIAL PRIMARY KEY,
   office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,

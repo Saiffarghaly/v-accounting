@@ -265,9 +265,17 @@ const Invoices = () => {
                       <option value="overdue">متأخر</option>
                     </select>
                   </td>
-                  <td className="py-3 flex gap-3">
+                    <td className="py-3 flex gap-3">
                     <button onClick={() => exportPDF(inv)}
                       className="text-gray-600 hover:text-amber-400 transition text-xs">PDF</button>
+                    {inv.client_name && (
+                      <button onClick={() => {
+                        const msg = encodeURIComponent(`فاتورة رقم #${inv.id}\nالعميل: ${inv.client_name}\nالمبلغ: ${Number(inv.amount).toLocaleString()} ج\nتاريخ الاستحقاق: ${inv.due_date ? new Date(inv.due_date).toLocaleDateString('ar-EG') : "—"}\n\nV-ACCOUNTING`);
+                        const phone = prompt("رقم الهاتف (مع مفتاح الدولة):", "20");
+                        if (phone) window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
+                      }}
+                        className="text-gray-600 hover:text-green-400 transition text-xs">📱 واتساب</button>
+                    )}
                     <button onClick={() => handleDelete(inv.id)}
                       className="text-gray-600 hover:text-red-400 transition text-xs">حذف</button>
                   </td>

@@ -11,6 +11,14 @@ import Treasury from "./pages/Treasury";
 import { BrandWordmark } from "./components/BrandWordmark";
 import Suppliers from "./pages/Suppliers";
 import Salaries from "./pages/Salaries";
+import Debts from "./pages/Debts";
+
+interface AlertData {
+  due_invoices: { id: number; amount: number; due_date: string }[];
+  low_inventory: { id: number; name: string; quantity: number; min_quantity: number; unit: string }[];
+  daily_summary: { income: number; expenses: number };
+  overdue_debts: { id: number; client_name: string; remaining: number; due_date: string }[];
+}
 
 interface Stats {
   income: number;
@@ -28,6 +36,8 @@ const Dashboard = () => {
   const { office, logout, token, canManageUsers } = useAuth();
   const [activePage, setActivePage] = useState("dashboard");
   const [stats, setStats] = useState<Stats | null>(null);
+  const [alerts, setAlerts] = useState<AlertData | null>(null);
+  const [showAlerts, setShowAlerts] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -42,6 +52,20 @@ const Dashboard = () => {
     };
     if (activePage === "dashboard") fetchStats();
   }, [activePage]);
+
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        const res = await axios.get(`${API}/api/alerts`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setAlerts(res.data);
+      } catch (err) { console.error(err); }
+    };
+    fetchAlerts();
+    const interval = setInterval(fetchAlerts, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (activePage === "users" && !canManageUsers) {
@@ -74,6 +98,7 @@ const Dashboard = () => {
             { id: "reports", label: "التقارير", icon: "📈" },
             { id: "suppliers", label: "الموردين", icon: "🚚" },
             { id: "salaries", label: "الرواتب", icon: "👨‍💼" },
+            { id: "debts", label: "الديون", icon: "💳" },
           ].filter((item) => item.id !== "users" || canManageUsers).map((item) => (
             <button
               key={item.id}
@@ -138,16 +163,68 @@ const Dashboard = () => {
             {activePage === "inventory" && "المخزن"}
             {activePage === "suppliers" && "الموردين"}
             {activePage === "salaries" && "الرواتب"}
+            {activePage === "debts" && "الديون"}
           </h2>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm" style={{ color: "#a8d5b5" }}>
-              {new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'day' })}
             </span>
-            <button className="text-white text-sm px-4 py-2 rounded-lg transition"
-              style={{ background: "#1a5c38" }}>
-              + جديد
-            </button>
+
+            {/* Alert Bell */}
+            <div className="relative">
+              <button onClick={() => setShowAlerts(!showAlerts)}
+                className="relative text-white text-lg p-2 rounded-lg transition"
+                style={{ background: "#1a5c38" }}>
+                🔔
+                {(alerts?.due_invoices?.length || alerts?.low_inventory?.length || alerts?.overdue_debts?.length) ? (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={{ background: "#c62828", color: "#fff", fontSize: "10px" }}>
+                    {(alerts?.due_invoices?.length || 0) + (alerts?.low_inventory?.length || 0) + (alerts?.overdue_debts?.length || 0)}
+                  </span>
+                ) : null}
+              </button>
+
+              {showAlerts && (
+                <div className="absolute left-0 top-full mt-2 w-80 rounded-xl shadow-lg border z-50"
+                  style={{ background: "#ffffff", borderColor: "#e0e0e0" }}>
+                  <div className="p-3 border-b" style={{ borderColor: "#e0e0e0" }}>
+                    <p className="font-semibold text-sm" style={{ color: "#333" }}>الإشعارات</p>
+                  </div>
+                  <div className="max-h-80 overflow-auto p-2 space-y-2">
+                    {alerts?.due_invoices?.length > 0 && (
+                      <div className="p-3 rounded-lg text-sm" style={{ background: "#fff3e0" }}>
+                        <p className="font-medium" style={{ color: "#e65100" }}>📄 فواتير اقتربت من الاستحقاق</p>
+                        <p className="text-xs mt-1" style={{ color: "#888" }}>{alerts.due_invoices.length} فاتورة مستحقة خلال 3 أيام</p>
+                      </div>
+                    )}
+                    {alerts?.low_inventory?.length > 0 && (
+                      <div className="p-3 rounded-lg text-sm" style={{ background: "#ffebee" }}>
+                        <p className="font-medium" style={{ color: "#c62828" }}>📦 مخزن وصل للحد الأدنى</p>
+                        <p className="text-xs mt-1" style={{ color: "#888" }}>{alerts.low_inventory.length} صنف يحتاج لإعادة توريد</p>
+                      </div>
+                    )}
+                    {alerts?.overdue_debts?.length > 0 && (
+                      <div className="p-3 rounded-lg text-sm" style={{ background: "#fce4ec" }}>
+                        <p className="font-medium" style={{ color: "#c62828" }}>💳 ديون متأخرة</p>
+                        <p className="text-xs mt-1" style={{ color: "#888" }}>{alerts.overdue_debts.length} دين تجاوز تاريخ الاستحقاق</p>
+                      </div>
+                    )}
+                    {alerts?.daily_summary && (
+                      <div className="p-3 rounded-lg text-sm" style={{ background: "#e8f5e9" }}>
+                        <p className="font-medium" style={{ color: "#217346" }}>📊 ملخص اليوم</p>
+                        <p className="text-xs mt-1" style={{ color: "#888" }}>
+                          إيرادات: {Number(alerts.daily_summary.income).toLocaleString()} ج · مصروفات: {Number(alerts.daily_summary.expenses).toLocaleString()} ج
+                        </p>
+                      </div>
+                    )}
+                    {!alerts?.due_invoices?.length && !alerts?.low_inventory?.length && !alerts?.overdue_debts?.length && (
+                      <p className="text-center py-4 text-sm" style={{ color: "#bbb" }}>لا توجد إشعارات جديدة</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
@@ -279,8 +356,9 @@ const Dashboard = () => {
         {activePage === "inventory" && <Inventory />}
         {activePage === "suppliers" && <Suppliers />}
         {activePage === "salaries" && <Salaries />}
+        {activePage === "debts" && <Debts />}
 
-        {activePage !== "dashboard" && activePage !== "income" && activePage !== "expenses" && activePage !== "clients" && activePage !== "invoices" && activePage !== "import" && activePage !== "treasury" && activePage !== "users" && activePage !== "inventory" && activePage !== "suppliers" && activePage !== "salaries" &&(
+        {activePage !== "dashboard" && activePage !== "income" && activePage !== "expenses" && activePage !== "clients" && activePage !== "invoices" && activePage !== "import" && activePage !== "treasury" && activePage !== "users" && activePage !== "inventory" && activePage !== "suppliers" && activePage !== "salaries" && activePage !== "debts" &&(
           <div className="flex items-center justify-center h-full" style={{ color: "#bbb" }}>
             <div className="text-center">
               <p className="text-4xl mb-3">🚧</p>
