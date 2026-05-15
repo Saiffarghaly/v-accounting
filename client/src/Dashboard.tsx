@@ -10,6 +10,7 @@ import Inventory from "./pages/Inventory";
 import Treasury from "./pages/Treasury";
 import { BrandWordmark } from "./components/BrandWordmark";
 import Suppliers from "./pages/Suppliers";
+import Salaries from "./pages/Salaries";
 
 interface Stats {
   income: number;
@@ -70,6 +71,7 @@ const Dashboard = () => {
             { id: "inventory", label: "المخزن", icon: "📦" },
             { id: "reports", label: "التقارير", icon: "📈" },
             { id: "suppliers", label: "الموردين", icon: "🚚" },
+            { id: "salaries", label: "الرواتب", icon: "👨‍💼" },
           ].filter((item) => item.id !== "users" || canManageUsers).map((item) => (
             <button
               key={item.id}
@@ -133,6 +135,7 @@ const Dashboard = () => {
             {activePage === "users" && "المستخدمون"}
             {activePage === "inventory" && "المخزن"}
             {activePage === "suppliers" && "الموردين"}
+            {activePage === "salaries" && "الرواتب"}
           </h2>
           </div>
           <div className="flex items-center gap-3">
@@ -273,8 +276,9 @@ const Dashboard = () => {
         {canManageUsers && activePage === "users" && <Users />}
         {activePage === "inventory" && <Inventory />}
         {activePage === "suppliers" && <Suppliers />}
+        {activePage === "salaries" && <Salaries />}
 
-        {activePage !== "dashboard" && activePage !== "income" && activePage !== "expenses" && activePage !== "clients" && activePage !== "invoices" && activePage !== "import" && activePage !== "treasury" && activePage !== "users" && activePage !== "inventory" && activePage !== "suppliers" &&(
+        {activePage !== "dashboard" && activePage !== "income" && activePage !== "expenses" && activePage !== "clients" && activePage !== "invoices" && activePage !== "import" && activePage !== "treasury" && activePage !== "users" && activePage !== "inventory" && activePage !== "suppliers" && activePage !== "salaries" &&(
           <div className="flex items-center justify-center h-full" style={{ color: "#bbb" }}>
             <div className="text-center">
               <p className="text-4xl mb-3">🚧</p>

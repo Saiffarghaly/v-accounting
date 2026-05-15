@@ -36,3 +36,5 @@ const treasuryRoutes = require('./routes/treasury');
 app.use('/api/treasury', treasuryRoutes);
 const supplierRoutes = require('./routes/suppliers');
 app.use('/api/suppliers', supplierRoutes);
+const salariesRoutes = require('./routes/salaries');
+app.use('/api/salaries', salariesRoutes);

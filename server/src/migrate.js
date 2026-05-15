@@ -137,6 +137,29 @@ ALTER TABLE inventory ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERE
 ALTER TABLE inventory_returns ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
 ALTER TABLE inventory_damages ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
 ALTER TABLE treasury_movements ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS employees (
+  id SERIAL PRIMARY KEY,
+  office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  name VARCHAR(255) NOT NULL,
+  phone VARCHAR(50),
+  salary DECIMAL(12,2) DEFAULT 0,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS employee_payments (
+  id SERIAL PRIMARY KEY,
+  office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  employee_id INTEGER REFERENCES employees(id) ON DELETE CASCADE,
+  amount DECIMAL(12,2) NOT NULL,
+  month VARCHAR(7) NOT NULL,
+  date DATE DEFAULT CURRENT_DATE,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
     `);
 
     console.log('✅ All tables created successfully!');
