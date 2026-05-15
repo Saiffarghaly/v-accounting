@@ -185,11 +185,13 @@ CREATE TABLE IF NOT EXISTS employee_payments (
     `);
 
     console.log('✅ All tables created successfully!');
-    process.exit(0);
   } catch (err) {
     console.error('❌ Migration error:', err);
-    process.exit(1);
   }
 };
 
-migrate();
+if (require.main === module) {
+  migrate().then(() => process.exit(0)).catch(() => process.exit(1));
+}
+
+module.exports = migrate;

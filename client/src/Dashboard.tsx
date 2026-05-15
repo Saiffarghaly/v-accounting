@@ -186,7 +186,7 @@ const Dashboard = () => {
               </button>
 
               {showAlerts && (
-                <div className="absolute left-0 top-full mt-2 w-80 rounded-xl shadow-lg border z-50"
+                <div className="absolute right-0 top-full mt-2 w-80 rounded-xl shadow-lg border z-50"
                   style={{ background: "#ffffff", borderColor: "#e0e0e0" }}>
                   <div className="p-3 border-b" style={{ borderColor: "#e0e0e0" }}>
                     <p className="font-semibold text-sm" style={{ color: "#333" }}>الإشعارات</p>
