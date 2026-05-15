@@ -168,7 +168,7 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm" style={{ color: "#a8d5b5" }}>
-              {new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'day' })}
+              {new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </span>
 
             {/* Alert Bell */}
