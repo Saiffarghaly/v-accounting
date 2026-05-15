@@ -22,7 +22,7 @@ interface Transaction {
 const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
 
 const Suppliers = () => {
-  const { token, canEdit } = useAuth();
+  const { token } = useAuth();
   const [tab, setTab] = useState<"add" | "purchase" | "debts">("add");
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(false);
