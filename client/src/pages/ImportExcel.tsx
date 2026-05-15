@@ -20,6 +20,7 @@ const ImportExcel = () => {
   const [step, setStep] = useState<"destination" | "upload" | "map" | "done">("destination");
   const [listSearch, setListSearch] = useState("");
 
+  const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
   const headers = { Authorization: `Bearer ${token}` };
 
   const destinations = [
@@ -98,7 +99,7 @@ const ImportExcel = () => {
             date: mapping.date ? String(row[mapping.date] || new Date().toISOString().split("T")[0]) : new Date().toISOString().split("T")[0],
           };
           if (body.amount <= 0) continue;
-          endpoint = "https://v-accounting-production.up.railway.app/api/transactions";
+          endpoint = `${API}/api/transactions`;
         } else if (destination === "clients") {
           body = {
             name: mapping.name ? String(row[mapping.name] || "") : "",
@@ -107,7 +108,7 @@ const ImportExcel = () => {
             address: mapping.address ? String(row[mapping.address] || "") : "",
           };
           if (!body.name) continue;
-          endpoint = "https://v-accounting-production.up.railway.app/api/clients";
+          endpoint = `${API}/api/clients`;
         } else if (destination === "inventory") {
           body = {
             name: mapping.name ? String(row[mapping.name] || "") : "",
@@ -120,7 +121,7 @@ const ImportExcel = () => {
             min_quantity: 5,
           };
           if (!body.name) continue;
-          endpoint = "https://v-accounting-production.up.railway.app/api/inventory";
+          endpoint = `${API}/api/inventory`;
         }
 
         await axios.post(endpoint, body, { headers });

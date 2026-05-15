@@ -8,12 +8,13 @@ const Register = ({ onSwitch }: { onSwitch: () => void }) => {
   const [form, setForm] = useState({ name: "", email: "", password: "", phone: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
 
   const handleRegister = async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await axios.post("https://v-accounting-production.up.railway.app/api/auth/register", form);
+      const res = await axios.post(`${API}/api/auth/register`, form);
       login(res.data.token, res.data.office);
     } catch (err: any) {
       setError(err.response?.data?.error || "Something went wrong");

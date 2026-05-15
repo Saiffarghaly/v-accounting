@@ -19,7 +19,7 @@ interface Transaction {
   date: string;
 }
 
-const API = "https://v-accounting-production.up.railway.app";
+const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
 
 const Suppliers = () => {
   const { token, canEdit } = useAuth();

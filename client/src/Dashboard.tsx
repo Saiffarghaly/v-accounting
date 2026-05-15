@@ -22,6 +22,8 @@ interface Stats {
   monthlyData: any[];
 }
 
+const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
+
 const Dashboard = () => {
   const { office, logout, token, canManageUsers } = useAuth();
   const [activePage, setActivePage] = useState("dashboard");
@@ -30,7 +32,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get("https://v-accounting-production.up.railway.app/api/stats", {
+        const res = await axios.get(`${API}/api/stats`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setStats(res.data);

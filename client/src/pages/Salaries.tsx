@@ -35,7 +35,7 @@ interface Report {
   }[];
 }
 
-const API = "https://v-accounting-production.up.railway.app";
+const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
 
 const Salaries = () => {
   const { token, canEdit } = useAuth();

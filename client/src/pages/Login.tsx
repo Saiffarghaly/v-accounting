@@ -10,14 +10,15 @@ const Login = ({ onSwitch }: { onSwitch: () => void }) => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
 
   const handleLogin = async () => {
     setLoading(true);
     setError("");
     try {
       const endpoint = loginType === "office"
-        ? "https://v-accounting-production.up.railway.app/api/auth/login"
-        : "https://v-accounting-production.up.railway.app/api/users/login";
+        ? `${API}/api/auth/login`
+        : `${API}/api/users/login`;
 
       const res = await axios.post(endpoint, { email, password });
       login(res.data.token, res.data.office, res.data.user?.role || "owner");

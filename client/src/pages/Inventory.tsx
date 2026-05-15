@@ -57,18 +57,20 @@ const Inventory = () => {
 
   const headers = { Authorization: `Bearer ${token}` };
 
+  const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
+
   const fetchItems = async () => {
-    const res = await axios.get("https://v-accounting-production.up.railway.app/api/inventory", { headers });
+    const res = await axios.get(`${API}/api/inventory`, { headers });
     setItems(res.data);
   };
 
   const fetchReturns = async () => {
-    const res = await axios.get("https://v-accounting-production.up.railway.app/api/inventory/returns", { headers });
+    const res = await axios.get(`${API}/api/inventory/returns`, { headers });
     setReturns(res.data);
   };
 
   const fetchDamages = async () => {
-    const res = await axios.get("https://v-accounting-production.up.railway.app/api/inventory/damages", { headers });
+    const res = await axios.get(`${API}/api/inventory/damages`, { headers });
     setDamages(res.data);
   };
 
@@ -86,7 +88,7 @@ const Inventory = () => {
     if (!form.name || !form.quantity) return;
     setLoading(true);
     try {
-      await axios.post("https://v-accounting-production.up.railway.app/api/inventory", form, { headers });
+      await axios.post(`${API}/api/inventory`, form, { headers });
       setForm({ name: "", category: "", buy_price: "", sell_wholesale: "", sell_retail: "", quantity: "", min_quantity: "5", unit: "قطعة" });
       setShowForm(false);
       fetchItems();
@@ -95,7 +97,7 @@ const Inventory = () => {
   };
 
   const handleDelete = async (id: number) => {
-    await axios.delete(`https://v-accounting-production.up.railway.app/api/inventory/${id}`, { headers });
+    await axios.delete(`${API}/api/inventory/${id}`, { headers });
     fetchItems();
   };
 
@@ -103,7 +105,7 @@ const Inventory = () => {
     if (!returnForm.item_id || !returnForm.quantity) return;
     setLoading(true);
     try {
-      await axios.post("https://v-accounting-production.up.railway.app/api/inventory/returns", returnForm, { headers });
+      await axios.post(`${API}/api/inventory/returns`, returnForm, { headers });
       setReturnForm({ item_id: "", quantity: "", reason: "", type: "return" });
       setShowReturnForm(false);
       fetchItems();
@@ -116,7 +118,7 @@ const Inventory = () => {
     if (!damageForm.item_id || !damageForm.quantity) return;
     setLoading(true);
     try {
-      await axios.post("https://v-accounting-production.up.railway.app/api/inventory/damages", damageForm, { headers });
+      await axios.post(`${API}/api/inventory/damages`, damageForm, { headers });
       setDamageForm({ item_id: "", quantity: "", reason: "" });
       setShowDamageForm(false);
       fetchItems();
