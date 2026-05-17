@@ -77,7 +77,7 @@ const AIAssistant = () => {
       }
     }
 
-    const expenseMatch = q.match(/(إضافة|اضافة|تسجيل|)\s*(مصروف|expense)\s*(\d+[\.\d]*)\s*([\u0600-~\s]+)?/i);
+    const expenseMatch = q.match(/(إضافة|اضافة|تسجيل|)\s*(مصروف|expense)\s*(\d+[\.\d]*)\s*(.+)?/i);
     if (expenseMatch) {
       const amount = parseFloat(expenseMatch[3]);
       const category = expenseMatch[4]?.trim() || "أخرى";
@@ -89,7 +89,7 @@ const AIAssistant = () => {
       }
     }
 
-    const incomeMatch = q.match(/(إضافة|اضافة|تسجيل|)\s*(إيراد|ايراد|income)\s*(\d+[\.\d]*)\s*([\u0600-~\s]+)?/i);
+    const incomeMatch = q.match(/(إضافة|اضافة|تسجيل|)\s*(إيراد|ايراد|income)\s*(\d+[\.\d]*)\s*(.+)?/i);
     if (incomeMatch) {
       const amount = parseFloat(incomeMatch[3]);
       const category = incomeMatch[4]?.trim() || "أخرى";
