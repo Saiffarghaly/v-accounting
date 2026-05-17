@@ -129,14 +129,14 @@ const AIAssistant = () => {
     <>
       {/* Floating button */}
       <button onClick={() => setOpen(!open)}
-        className="fixed bottom-6 left-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl z-50 transition hover:scale-110"
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl z-50 transition hover:scale-110"
         style={{ background: "#217346", color: "#fff" }}>
         {open ? "✕" : "🤖"}
       </button>
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-24 left-6 w-96 h-[30rem] rounded-2xl shadow-2xl border z-50 flex flex-col"
+        <div className="fixed bottom-24 right-6 w-96 h-[30rem] rounded-2xl shadow-2xl border z-50 flex flex-col"
           style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
           {/* Header */}
           <div className="px-5 py-4 rounded-t-2xl flex items-center gap-3 text-white"
