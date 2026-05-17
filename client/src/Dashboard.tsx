@@ -14,6 +14,8 @@ import Suppliers from "./pages/Suppliers";
 import Salaries from "./pages/Salaries";
 import Debts from "./pages/Debts";
 import Reports from "./pages/Reports";
+import BankSync from "./pages/BankSync";
+import AIAssistant from "./components/AIAssistant";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, AreaChart, Area, Legend
@@ -40,6 +42,8 @@ interface Stats {
   recentTransactions: any[];
   monthlyData: { month: string; income: number; expenses: number }[];
   cashFlow: { income: number; expenses: number; net: number };
+  healthScore: number;
+  topCategories: { category: string; total: number }[];
 }
 
 const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
@@ -158,6 +162,7 @@ const Dashboard = () => {
     { id: "suppliers", label: "الموردين", icon: "🚚" },
     { id: "salaries", label: "الرواتب", icon: "👨‍💼" },
     { id: "debts", label: "الديون", icon: "💳" },
+    { id: "bank", label: "البنوك", icon: "🏦" },
   ].filter((item) => item.id !== "users" || canManageUsers);
 
   const isDashboard = activePage === "dashboard";
@@ -233,6 +238,7 @@ const Dashboard = () => {
               {activePage === "suppliers" && "الموردين"}
               {activePage === "salaries" && "الرواتب"}
               {activePage === "debts" && "الديون"}
+              {activePage === "bank" && "البنوك"}
             </h2>
           </div>
           <div className="flex items-center gap-4">
@@ -356,13 +362,25 @@ const Dashboard = () => {
                   Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)
                 ) : (
                   <>
-                    {/* Profit Margin */}
+                    {/* Health Score */}
                     <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: "var(--color-accent-lighter)" }}>
                       <div>
-                        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>هامش الربح</p>
-                        <p className="text-lg font-bold" style={{ color: "var(--color-success)" }}>{stats?.profitMargin || 0}%</p>
+                        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>مؤشر صحة الشركة</p>
+                        <p className="text-lg font-bold" style={{ color: "var(--color-success)" }}>
+                          {stats?.healthScore !== undefined ? `${stats.healthScore}/100` : "—"}
+                        </p>
                       </div>
-                      <span className="text-2xl">📈</span>
+                      <div className="relative w-12 h-12">
+                        <svg viewBox="0 0 36 36" className="w-12 h-12">
+                          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--color-border)" strokeWidth="3" />
+                          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none"
+                            stroke={stats?.healthScore && stats.healthScore >= 60 ? "var(--color-success)" : stats?.healthScore && stats.healthScore >= 40 ? "var(--color-warning)" : "var(--color-danger)"}
+                            strokeWidth="3" strokeDasharray={`${stats?.healthScore || 0}, 100`} />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold" style={{ color: "var(--color-text-primary)" }}>
+                          {stats?.healthScore || 0}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Income Trend */}
@@ -471,8 +489,9 @@ const Dashboard = () => {
         {activePage === "salaries" && <Salaries />}
         {activePage === "debts" && <Debts />}
         {activePage === "reports" && <Reports />}
+        {activePage === "bank" && <BankSync />}
 
-        {!["dashboard","income","expenses","clients","invoices","import","treasury","users","inventory","suppliers","salaries","debts","reports"].includes(activePage) && (
+        {!["dashboard","income","expenses","clients","invoices","import","treasury","users","inventory","suppliers","salaries","debts","reports","bank"].includes(activePage) && (
           <div className="flex items-center justify-center h-full" style={{ color: "var(--color-text-muted)" }}>
             <div className="text-center">
               <p className="text-4xl mb-3">🚧</p>
@@ -481,6 +500,7 @@ const Dashboard = () => {
           </div>
         )}
       </main>
+      <AIAssistant />
     </div>
   );
 };

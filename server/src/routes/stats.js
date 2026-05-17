@@ -18,7 +18,7 @@ const auth = (req, res, next) => {
 
 router.get('/', auth, async (req, res) => {
   try {
-    const [income, expenses, clients, pendingInvoices, recentTx, monthlyData, totalInvoices, overdueDebts, prevMonth] = await Promise.all([
+    const [income, expenses, clients, pendingInvoices, recentTx, monthlyData, totalInvoices, overdueDebts, prevMonth, topCategories] = await Promise.all([
       pool.query(`SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE office_id = $1 AND type = 'إيراد'`, [req.officeId]),
       pool.query(`SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE office_id = $1 AND type = 'مصروف'`, [req.officeId]),
       pool.query(`SELECT COUNT(*) as total FROM clients WHERE office_id = $1`, [req.officeId]),
@@ -28,6 +28,7 @@ router.get('/', auth, async (req, res) => {
       pool.query(`SELECT COUNT(*) as total, COALESCE(SUM(amount), 0) as total_amount FROM invoices WHERE office_id = $1`, [req.officeId]),
       pool.query(`SELECT COUNT(*) as total FROM client_debts WHERE office_id = $1 AND status = 'active' AND due_date < CURRENT_DATE AND remaining > 0`, [req.officeId]),
       pool.query(`SELECT COALESCE(SUM(CASE WHEN type = 'إيراد' THEN amount ELSE 0 END), 0) as income, COALESCE(SUM(CASE WHEN type = 'مصروف' THEN amount ELSE 0 END), 0) as expenses FROM transactions WHERE office_id = $1 AND date >= NOW() - INTERVAL '1 month' AND date < DATE_TRUNC('month', NOW())`, [req.officeId]),
+      pool.query(`SELECT category, SUM(amount) as total FROM transactions WHERE office_id = $1 AND type = 'مصروف' GROUP BY category ORDER BY total DESC LIMIT 5`, [req.officeId]),
     ]);
 
     const totalIncome = Number(income.rows[0].total);
@@ -37,8 +38,38 @@ router.get('/', auth, async (req, res) => {
 
     const prevIncome = Number(prevMonth.rows[0].income);
     const prevExpenses = Number(prevMonth.rows[0].expenses);
-    const prevProfit = prevIncome - prevExpenses;
     const incomeTrend = prevIncome > 0 ? ((totalIncome - prevIncome) / prevIncome) * 100 : 0;
+
+    const numClients = Number(clients.rows[0].total);
+    const numOverdue = Number(overdueDebts.rows[0].total);
+    const expenseRatio = totalIncome > 0 ? totalExpenses / totalIncome : 1;
+
+    /* Business Health Score (0-100) */
+    let healthScore = 0;
+    if (profitMargin >= 20) healthScore += 30;
+    else if (profitMargin >= 10) healthScore += 20;
+    else if (profitMargin > 0) healthScore += 10;
+
+    if (incomeTrend > 10) healthScore += 20;
+    else if (incomeTrend > 0) healthScore += 15;
+    else if (incomeTrend === 0) healthScore += 10;
+    else if (incomeTrend > -10) healthScore += 5;
+
+    if (expenseRatio < 0.4) healthScore += 20;
+    else if (expenseRatio < 0.6) healthScore += 15;
+    else if (expenseRatio < 0.8) healthScore += 10;
+    else healthScore += 5;
+
+    if (numClients >= 50) healthScore += 15;
+    else if (numClients >= 20) healthScore += 12;
+    else if (numClients >= 10) healthScore += 8;
+    else if (numClients > 0) healthScore += 4;
+
+    if (numOverdue === 0) healthScore += 15;
+    else if (numOverdue <= 2) healthScore += 10;
+    else if (numOverdue <= 5) healthScore += 5;
+
+    healthScore = Math.min(100, Math.max(0, healthScore));
 
     res.json({
       income: totalIncome,
@@ -46,14 +77,16 @@ router.get('/', auth, async (req, res) => {
       profit,
       profitMargin: Math.round(profitMargin * 100) / 100,
       incomeTrend: Math.round(incomeTrend * 100) / 100,
-      clients: Number(clients.rows[0].total),
+      clients: numClients,
       pendingInvoices: Number(pendingInvoices.rows[0].total),
       totalInvoices: Number(totalInvoices.rows[0].total),
       invoicesAmount: Number(totalInvoices.rows[0].total_amount),
-      overdueDebts: Number(overdueDebts.rows[0].total),
+      overdueDebts: numOverdue,
       recentTransactions: recentTx.rows,
       monthlyData: monthlyData.rows,
       cashFlow: { income: totalIncome, expenses: totalExpenses, net: profit },
+      healthScore,
+      topCategories: topCategories.rows,
     });
   } catch (err) {
     console.error(err);

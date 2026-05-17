@@ -182,6 +182,31 @@ CREATE TABLE IF NOT EXISTS employee_payments (
   notes TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS bank_accounts (
+  id SERIAL PRIMARY KEY,
+  office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  bank_name VARCHAR(255) NOT NULL,
+  account_name VARCHAR(255) NOT NULL,
+  account_number VARCHAR(100),
+  iban VARCHAR(100),
+  swift VARCHAR(50),
+  currency VARCHAR(10) DEFAULT 'EGP',
+  balance DECIMAL(12,2) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS bank_transactions (
+  id SERIAL PRIMARY KEY,
+  account_id INTEGER REFERENCES bank_accounts(id) ON DELETE CASCADE,
+  office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  type VARCHAR(20) NOT NULL CHECK (type IN ('deposit', 'withdraw')),
+  amount DECIMAL(12,2) NOT NULL,
+  description TEXT,
+  date DATE DEFAULT CURRENT_DATE,
+  reference VARCHAR(100),
+  created_at TIMESTAMP DEFAULT NOW()
+);
     `);
 
     console.log('✅ All tables created successfully!');
