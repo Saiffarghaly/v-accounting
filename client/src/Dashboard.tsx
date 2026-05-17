@@ -13,6 +13,7 @@ import { BrandWordmark } from "./components/BrandWordmark";
 import Suppliers from "./pages/Suppliers";
 import Salaries from "./pages/Salaries";
 import Debts from "./pages/Debts";
+import Reports from "./pages/Reports";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, AreaChart, Area, Legend
@@ -469,8 +470,9 @@ const Dashboard = () => {
         {activePage === "suppliers" && <Suppliers />}
         {activePage === "salaries" && <Salaries />}
         {activePage === "debts" && <Debts />}
+        {activePage === "reports" && <Reports />}
 
-        {!["dashboard","income","expenses","clients","invoices","import","treasury","users","inventory","suppliers","salaries","debts"].includes(activePage) && (
+        {!["dashboard","income","expenses","clients","invoices","import","treasury","users","inventory","suppliers","salaries","debts","reports"].includes(activePage) && (
           <div className="flex items-center justify-center h-full" style={{ color: "var(--color-text-muted)" }}>
             <div className="text-center">
               <p className="text-4xl mb-3">🚧</p>
