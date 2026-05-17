@@ -7,6 +7,8 @@ import { ListSearchField } from "../components/ListSearchField";
 
 type Destination = "transactions" | "clients" | "inventory" | "";
 
+const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
+
 const ImportExcel = () => {
   const { token } = useAuth();
   const [destination, setDestination] = useState<Destination>("");
@@ -20,7 +22,6 @@ const ImportExcel = () => {
   const [step, setStep] = useState<"destination" | "upload" | "map" | "done">("destination");
   const [listSearch, setListSearch] = useState("");
 
-  const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
   const headers = { Authorization: `Bearer ${token}` };
 
   const destinations = [
@@ -166,8 +167,8 @@ const ImportExcel = () => {
     <div className="p-8 space-y-6">
 
       <div>
-        <h3 className="text-lg font-semibold">استيراد Excel</h3>
-        <p className="text-sm text-gray-500 mt-1">ارفع أي ملف Excel وحدد الأعمدة بنفسك</p>
+        <h3 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>استيراد Excel</h3>
+        <p className="text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>ارفع أي ملف Excel وحدد الأعمدة بنفسك</p>
       </div>
 
       {/* Steps */}
@@ -175,14 +176,18 @@ const ImportExcel = () => {
         {stepLabels.map((label, i) => (
           <div key={i} className="flex items-center gap-2">
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-              stepKeys[i] === step ? "bg-amber-500 text-white" :
-              stepKeys.indexOf(step) > i ? "bg-green-600 text-white" :
-              "bg-gray-800 text-gray-500"
-            }`}>
+              stepKeys[i] === step ? "text-white" :
+              stepKeys.indexOf(step) > i ? "text-white" :
+              ""
+            }`} style={{
+              background: stepKeys[i] === step ? "var(--color-accent)" :
+                         stepKeys.indexOf(step) > i ? "var(--color-accent)" :
+                         "var(--color-bg-input)"
+            }}>
               {i + 1}
             </div>
-            <span className="text-sm text-gray-400">{label}</span>
-            {i < 3 && <div className="w-6 h-px bg-gray-700" />}
+            <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>{label}</span>
+            {i < 3 && <div className="w-6 h-px" style={{ background: "var(--color-border)" }} />}
           </div>
         ))}
       </div>
@@ -190,22 +195,24 @@ const ImportExcel = () => {
       {/* Step 0: Choose Destination */}
       {step === "destination" && (
         <div className="space-y-4">
-          <p className="text-gray-400">البيانات اللي هترفعها هتتحفظ فين؟</p>
+          <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>البيانات اللي هترفعها هتتحفظ فين؟</p>
           <div className="grid grid-cols-3 gap-4">
             {destinations.map((d) => (
               <button key={d.id} onClick={() => setDestination(d.id as Destination)}
-                className={`bg-gray-900 border-2 rounded-xl p-6 text-right transition ${
-                  destination === d.id ? "border-amber-500" : "border-gray-800 hover:border-gray-600"
-                }`}>
+                className="rounded-xl p-6 text-right transition border-2"
+                style={{
+                  background: "var(--color-bg-card)",
+                  borderColor: destination === d.id ? "var(--color-accent)" : "var(--color-border)",
+                }}>
                 <p className="text-3xl mb-3">{d.icon}</p>
-                <p className="font-medium text-white mb-1">{d.label}</p>
-                <p className="text-xs text-gray-500">{d.desc}</p>
+                <p className="font-medium mb-1" style={{ color: "var(--color-text-primary)" }}>{d.label}</p>
+                <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>{d.desc}</p>
               </button>
             ))}
           </div>
           <div className="flex justify-end">
             <button onClick={() => destination && setStep("upload")} disabled={!destination}
-              className="bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white text-sm px-8 py-3 rounded-lg transition">
+              className="text-white text-sm px-8 py-3 rounded-lg transition disabled:opacity-40" style={{ background: "var(--color-accent)" }}>
               التالي ←
             </button>
           </div>
@@ -215,22 +222,22 @@ const ImportExcel = () => {
       {/* Step 1: Upload */}
       {step === "upload" && (
         <div className="space-y-4">
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-center gap-3">
+          <div className="rounded-xl p-4 flex items-center gap-3 border" style={{ background: "var(--color-accent-lighter)", borderColor: "var(--color-accent-light)" }}>
             <span className="text-2xl">{destinations.find(d => d.id === destination)?.icon}</span>
             <div>
-              <p className="text-amber-400 font-medium">الوجهة: {destinations.find(d => d.id === destination)?.label}</p>
-              <button onClick={() => setStep("destination")} className="text-xs text-gray-500 hover:text-gray-300">تغيير</button>
+              <p className="font-medium" style={{ color: "var(--color-accent)" }}>الوجهة: {destinations.find(d => d.id === destination)?.label}</p>
+              <button onClick={() => setStep("destination")} className="text-xs" style={{ color: "var(--color-text-muted)" }}>تغيير</button>
             </div>
           </div>
-          <div className="bg-gray-900 border-2 border-dashed border-gray-700 rounded-xl p-12 text-center">
+          <div className="rounded-xl p-12 text-center border-2 border-dashed" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
             <p className="text-5xl mb-4">📁</p>
-            <p className="text-gray-400 mb-6">ارفع أي ملف Excel أو CSV</p>
+            <p className="mb-6" style={{ color: "var(--color-text-secondary)" }}>ارفع أي ملف Excel أو CSV</p>
             <input type="file" accept=".xlsx,.xls,.csv" onChange={handleFile} className="hidden" id="file-upload" />
             <label htmlFor="file-upload"
-              className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-8 py-3 rounded-lg cursor-pointer transition">
+              className="text-white text-sm px-8 py-3 rounded-lg cursor-pointer transition" style={{ background: "var(--color-accent)" }}>
               اختر الملف
             </label>
-            {error && <p className="text-red-400 text-sm mt-4">{error}</p>}
+            {error && <p className="mt-4 text-sm" style={{ color: "var(--color-danger)" }}>{error}</p>}
           </div>
         </div>
       )}
@@ -238,14 +245,14 @@ const ImportExcel = () => {
       {/* Step 2: Map Columns */}
       {step === "map" && (
         <div className="space-y-4">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
-            <h4 className="font-medium text-gray-300">حدد إيه كل عمود</h4>
-            <p className="text-sm text-gray-500">الملف عنده {rawData.length} صف و {columns.length} عمود</p>
+          <div className="rounded-xl p-6 border space-y-4" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+            <h4 className="font-medium" style={{ color: "var(--color-text-primary)" }}>حدد إيه كل عمود</h4>
+            <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>الملف عنده {rawData.length} صف و {columns.length} عمود</p>
 
             <div className="flex flex-wrap items-center gap-2">
-              <ListSearchField variant="dark" value={listSearch} onChange={setListSearch} placeholder="بحث في معاينة الصفوف…" />
+              <ListSearchField variant="light" value={listSearch} onChange={setListSearch} placeholder="بحث في معاينة الصفوف…" />
               {listSearch.trim() ? (
-                <span className="text-xs text-gray-500">
+                <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                   {filteredPreviewRows.length} صف يطابق البحث (المعاينة أول 20 منها؛ الاستيراد لكل {rawData.length} صف)
                 </span>
               ) : null}
@@ -254,10 +261,11 @@ const ImportExcel = () => {
             <div className="grid grid-cols-2 gap-4">
               {(fieldsByDestination[destination] || []).map((field) => (
                 <div key={field.key}>
-                  <label className="text-sm text-gray-400 mb-1 block">{field.label}</label>
+                  <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>{field.label}</label>
                   <select value={mapping[field.key] || ""}
                     onChange={(e) => setMapping({ ...mapping, [field.key]: e.target.value })}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500">
+                    style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                    className="w-full border rounded-lg px-4 py-3 text-sm">
                     <option value="">— اختر عمود —</option>
                     {columns.map(col => <option key={col} value={col}>{col}</option>)}
                   </select>
@@ -266,9 +274,10 @@ const ImportExcel = () => {
 
               {destination === "transactions" && (
                 <div>
-                  <label className="text-sm text-gray-400 mb-1 block">النوع الافتراضي</label>
+                  <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>النوع الافتراضي</label>
                   <select value={defaultType} onChange={(e) => setDefaultType(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500">
+                    style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                    className="w-full border rounded-lg px-4 py-3 text-sm">
                     <option value="إيراد">إيراد</option>
                     <option value="مصروف">مصروف</option>
                   </select>
@@ -276,26 +285,26 @@ const ImportExcel = () => {
               )}
             </div>
 
-            {error && <p className="text-red-400 text-sm">{error}</p>}
+            {error && <p className="text-sm" style={{ color: "var(--color-danger)" }}>{error}</p>}
 
             <div className="overflow-x-auto">
-              <p className="text-xs text-gray-500 mb-2">معاينة أول 20 صفًا من نتائج البحث (أو من الملف إن لم يُستخدم البحث):</p>
+              <p className="text-xs mb-2" style={{ color: "var(--color-text-muted)" }}>معاينة أول 20 صفًا من نتائج البحث:</p>
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="text-gray-500 border-b border-gray-800">
+                  <tr style={{ color: "var(--color-text-muted)", borderBottom: "1px solid var(--color-border)" }}>
                     {columns.map(col => <th key={col} className="text-right pb-2 px-2">{col}</th>)}
                   </tr>
                 </thead>
                 <tbody>
                   {previewRows.length === 0 ? (
                     <tr>
-                      <td colSpan={Math.max(columns.length, 1)} className="py-6 text-center text-gray-500">
+                      <td colSpan={Math.max(columns.length, 1)} className="py-6 text-center" style={{ color: "var(--color-text-muted)" }}>
                         لا توجد نتائج تطابق البحث
                       </td>
                     </tr>
                   ) : (
                     previewRows.map((row, i) => (
-                      <tr key={i} className="text-gray-400 border-b border-gray-800/50">
+                      <tr key={i} style={{ color: "var(--color-text-secondary)", borderBottom: "1px solid var(--color-border-light)" }}>
                         {columns.map(col => <td key={col} className="py-2 px-2">{String(row[col] || "")}</td>)}
                       </tr>
                     ))
@@ -306,11 +315,11 @@ const ImportExcel = () => {
 
             <div className="flex gap-3 pt-2">
               <button onClick={handleImport} disabled={loading}
-                className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm px-8 py-3 rounded-lg transition">
+                className="text-white text-sm px-8 py-3 rounded-lg transition disabled:opacity-50" style={{ background: "var(--color-accent)" }}>
                 {loading ? "جاري الاستيراد..." : `استيراد ${rawData.length} صف إلى ${destinations.find(d => d.id === destination)?.label}`}
               </button>
               <button onClick={reset}
-                className="bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm px-6 py-3 rounded-lg transition">
+                className="px-6 py-3 rounded-lg transition text-sm" style={{ background: "var(--color-bg-input)", color: "var(--color-text-secondary)" }}>
                 إلغاء
               </button>
             </div>
@@ -320,15 +329,15 @@ const ImportExcel = () => {
 
       {/* Step 3: Done */}
       {step === "done" && (
-        <div className="bg-green-400/10 border border-green-400/20 rounded-xl p-10 text-center space-y-4">
+        <div className="rounded-xl p-10 text-center space-y-4 border" style={{ background: "var(--color-success-light)", borderColor: "var(--color-accent-light)" }}>
           <p className="text-5xl">✅</p>
-          <p className="text-xl font-bold text-green-400">تم الاستيراد بنجاح!</p>
-          <p className="text-gray-400">
-            تم استيراد <span className="text-white font-bold">{success}</span> سجل إلى{" "}
-            <span className="text-amber-400">{destinations.find(d => d.id === destination)?.label}</span>
+          <p className="text-xl font-bold" style={{ color: "var(--color-success)" }}>تم الاستيراد بنجاح!</p>
+          <p style={{ color: "var(--color-text-secondary)" }}>
+            تم استيراد <span className="font-bold" style={{ color: "var(--color-text-primary)" }}>{success}</span> سجل إلى{" "}
+            <span style={{ color: "var(--color-accent)" }}>{destinations.find(d => d.id === destination)?.label}</span>
           </p>
           <button onClick={reset}
-            className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-8 py-3 rounded-lg transition">
+            className="text-white text-sm px-8 py-3 rounded-lg transition" style={{ background: "var(--color-accent)" }}>
             استيراد ملف آخر
           </button>
         </div>

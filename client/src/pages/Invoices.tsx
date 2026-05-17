@@ -19,6 +19,8 @@ interface Client {
   name: string;
 }
 
+const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
+
 const Invoices = () => {
   const { token } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -31,14 +33,14 @@ const Invoices = () => {
 
   const fetchInvoices = async () => {
     try {
-      const res = await axios.get("${import.meta.env.VITE_API_URL}/api/invoices", { headers });
+      const res = await axios.get(`${API}/api/invoices`, { headers });
       setInvoices(res.data);
     } catch (err) { console.error(err); }
   };
 
   const fetchClients = async () => {
     try {
-      const res = await axios.get("${import.meta.env.VITE_API_URL}/api/clients", { headers });
+      const res = await axios.get(`${API}/api/clients`, { headers });
       setClients(res.data);
     } catch (err) { console.error(err); }
   };
@@ -49,7 +51,7 @@ const Invoices = () => {
     if (!form.client_id || !form.amount) return;
     setLoading(true);
     try {
-      await axios.post("${import.meta.env.VITE_API_URL}/api/invoices", form, { headers });
+      await axios.post(`${API}/api/invoices`, form, { headers });
       setForm({ client_id: "", amount: "", status: "pending", due_date: "" });
       setShowForm(false);
       fetchInvoices();
@@ -59,14 +61,14 @@ const Invoices = () => {
 
   const handleStatusChange = async (id: number, status: string) => {
     try {
-      await axios.patch(`${import.meta.env.VITE_API_URL}/api/invoices/${id}`, { status }, { headers });
+      await axios.patch(`${API}/api/invoices/${id}`, { status }, { headers });
       fetchInvoices();
     } catch (err) { console.error(err); }
   };
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/invoices/${id}`, { headers });
+      await axios.delete(`${API}/api/invoices/${id}`, { headers });
       fetchInvoices();
     } catch (err) { console.error(err); }
   };
@@ -86,7 +88,7 @@ const Invoices = () => {
     const content = `
       <div dir="rtl" style="font-family: Arial, sans-serif; padding: 40px; color: #000; background: #fff; width: 700px;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #f59e0b; font-size: 28px; margin: 0;">V-ACCOUNTING</h1>
+          <h1 style="color: #217346; font-size: 28px; margin: 0;">V-ACCOUNTING</h1>
           <p style="color: #666; margin: 5px 0;">فاتورة ضريبية</p>
           <hr style="border: 1px solid #eee; margin-top: 15px;"/>
         </div>
@@ -103,7 +105,7 @@ const Invoices = () => {
         </div>
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
           <thead>
-            <tr style="background: #f59e0b; color: white;">
+            <tr style="background: #217346; color: white;">
               <th style="padding: 12px; text-align: right;">البيان</th>
               <th style="padding: 12px; text-align: right;">المبلغ</th>
             </tr>
@@ -116,7 +118,7 @@ const Invoices = () => {
           </tbody>
         </table>
         <div style="text-align: left; margin-top: 20px;">
-          <h3 style="color: #f59e0b;">الإجمالي: ${Number(inv.amount).toLocaleString()} ج.م</h3>
+          <h3 style="color: #217346;">الإجمالي: ${Number(inv.amount).toLocaleString()} ج.م</h3>
         </div>
         <div style="text-align: center; margin-top: 50px; color: #999; font-size: 12px;">
           <p>تم الإنشاء بواسطة V-ACCOUNTING</p>
@@ -141,12 +143,6 @@ const Invoices = () => {
     });
   };
 
-  const statusColor = (status: string) => {
-    if (status === "paid") return "bg-green-400/10 text-green-400";
-    if (status === "overdue") return "bg-red-400/10 text-red-400";
-    return "bg-yellow-400/10 text-yellow-400";
-  };
-
   const total = invoices.reduce((s, i) => s + Number(i.amount), 0);
   const paid = invoices.filter(i => i.status === "paid").reduce((s, i) => s + Number(i.amount), 0);
   const pending = invoices.filter(i => i.status === "pending").reduce((s, i) => s + Number(i.amount), 0);
@@ -155,93 +151,97 @@ const Invoices = () => {
     <div className="p-8 space-y-6">
 
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <p className="text-gray-400 text-sm mb-1">إجمالي الفواتير</p>
-          <p className="text-2xl font-bold text-amber-400">{total.toLocaleString()} ج</p>
+        <div className="rounded-xl p-5 border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+          <p className="text-sm mb-1" style={{ color: "var(--color-text-secondary)" }}>إجمالي الفواتير</p>
+          <p className="text-2xl font-bold" style={{ color: "var(--color-warning)" }}>{total.toLocaleString()} ج</p>
         </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <p className="text-gray-400 text-sm mb-1">المدفوع</p>
-          <p className="text-2xl font-bold text-green-400">{paid.toLocaleString()} ج</p>
+        <div className="rounded-xl p-5 border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+          <p className="text-sm mb-1" style={{ color: "var(--color-text-secondary)" }}>المدفوع</p>
+          <p className="text-2xl font-bold" style={{ color: "var(--color-success)" }}>{paid.toLocaleString()} ج</p>
         </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <p className="text-gray-400 text-sm mb-1">المعلق</p>
-          <p className="text-2xl font-bold text-yellow-400">{pending.toLocaleString()} ج</p>
+        <div className="rounded-xl p-5 border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+          <p className="text-sm mb-1" style={{ color: "var(--color-text-secondary)" }}>المعلق</p>
+          <p className="text-2xl font-bold" style={{ color: "var(--color-danger)" }}>{pending.toLocaleString()} ج</p>
         </div>
       </div>
 
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">الفواتير</h3>
-          <p className="text-sm text-gray-500">{invoices.length} فاتورة</p>
+          <h3 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>الفواتير</h3>
+          <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>{invoices.length} فاتورة</p>
         </div>
         <div className="flex gap-2">
           <button onClick={handleExport}
-            className="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg transition">
+            className="text-white text-sm px-4 py-2 rounded-lg transition" style={{ background: "var(--color-accent)" }}>
             تصدير Excel ⬇
           </button>
           <button onClick={() => setShowForm(!showForm)}
-            className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg transition">
+            className="text-white text-sm px-4 py-2 rounded-lg transition" style={{ background: "#1a5c38" }}>
             + فاتورة جديدة
           </button>
         </div>
       </div>
 
       {showForm && (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
-          <h4 className="font-medium text-gray-300">فاتورة جديدة</h4>
+        <div className="rounded-xl p-6 border space-y-4" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+          <h4 className="font-medium" style={{ color: "var(--color-text-primary)" }}>فاتورة جديدة</h4>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">العميل *</label>
+              <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>العميل *</label>
               <select value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500">
+                style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                className="w-full border rounded-lg px-4 py-3 text-sm">
                 <option value="">اختر عميل</option>
                 {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">المبلغ *</label>
+              <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>المبلغ *</label>
               <input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })}
                 placeholder="0"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500" />
+                style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                className="w-full border rounded-lg px-4 py-3 text-sm" />
             </div>
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">الحالة</label>
+              <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>الحالة</label>
               <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500">
+                style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                className="w-full border rounded-lg px-4 py-3 text-sm">
                 <option value="pending">معلق</option>
                 <option value="paid">مدفوع</option>
                 <option value="overdue">متأخر</option>
               </select>
             </div>
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">تاريخ الاستحقاق</label>
+              <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>تاريخ الاستحقاق</label>
               <input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500" />
+                style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                className="w-full border rounded-lg px-4 py-3 text-sm" />
             </div>
           </div>
           <div className="flex gap-3">
             <button onClick={handleAdd} disabled={loading}
-              className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-sm px-6 py-2 rounded-lg transition">
+              className="text-white text-sm px-6 py-2 rounded-lg transition disabled:opacity-50" style={{ background: "var(--color-accent)" }}>
               {loading ? "جاري الحفظ..." : "حفظ"}
             </button>
             <button onClick={() => setShowForm(false)}
-              className="bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm px-6 py-2 rounded-lg transition">
+              className="px-6 py-2 rounded-lg transition text-sm" style={{ background: "var(--color-bg-input)", color: "var(--color-text-secondary)" }}>
               إلغاء
             </button>
           </div>
         </div>
       )}
 
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+      <div className="rounded-xl p-6 border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
         {invoices.length === 0 ? (
-          <div className="text-center text-gray-600 py-8">
+          <div className="text-center py-8" style={{ color: "var(--color-text-muted)" }}>
             <p className="text-3xl mb-2">🧾</p>
             <p>لا توجد فواتير بعد</p>
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-gray-500 border-b border-gray-800">
+              <tr style={{ color: "var(--color-text-muted)", borderBottom: "1px solid var(--color-border)" }}>
                 <th className="text-right pb-3">#</th>
                 <th className="text-right pb-3">العميل</th>
                 <th className="text-right pb-3">المبلغ</th>
@@ -250,16 +250,20 @@ const Invoices = () => {
                 <th className="text-right pb-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800">
+            <tbody style={{ color: "var(--color-text-primary)" }}>
               {invoices.map((inv) => (
-                <tr key={inv.id} className="text-gray-300">
-                  <td className="py-3 text-gray-500">#{inv.id}</td>
+                <tr key={inv.id} style={{ borderBottom: "1px solid var(--color-border-light)" }}>
+                  <td className="py-3" style={{ color: "var(--color-text-muted)" }}>#{inv.id}</td>
                   <td className="py-3 font-medium">{inv.client_name}</td>
                   <td className="py-3">{Number(inv.amount).toLocaleString()} ج</td>
-                  <td className="py-3 text-gray-500">{inv.due_date ? new Date(inv.due_date).toLocaleDateString('ar-EG') : "—"}</td>
+                  <td className="py-3" style={{ color: "var(--color-text-muted)" }}>{inv.due_date ? new Date(inv.due_date).toLocaleDateString('ar-EG') : "—"}</td>
                   <td className="py-3">
                     <select value={inv.status} onChange={(e) => handleStatusChange(inv.id, e.target.value)}
-                      className={`text-xs px-2 py-1 rounded-full border-0 cursor-pointer ${statusColor(inv.status)}`}>
+                      className="text-xs px-2 py-1 rounded-full border-0 cursor-pointer font-medium"
+                      style={{
+                        background: inv.status === "paid" ? "var(--color-success-light)" : inv.status === "overdue" ? "var(--color-danger-light)" : "var(--color-warning-light)",
+                        color: inv.status === "paid" ? "var(--color-success)" : inv.status === "overdue" ? "var(--color-danger)" : "var(--color-warning)",
+                      }}>
                       <option value="pending">معلق</option>
                       <option value="paid">مدفوع</option>
                       <option value="overdue">متأخر</option>
@@ -267,17 +271,17 @@ const Invoices = () => {
                   </td>
                     <td className="py-3 flex gap-3">
                     <button onClick={() => exportPDF(inv)}
-                      className="text-gray-600 hover:text-amber-400 transition text-xs">PDF</button>
+                      className="transition text-xs" style={{ color: "var(--color-text-muted)" }}>PDF</button>
                     {inv.client_name && (
                       <button onClick={() => {
                         const msg = encodeURIComponent(`فاتورة رقم #${inv.id}\nالعميل: ${inv.client_name}\nالمبلغ: ${Number(inv.amount).toLocaleString()} ج\nتاريخ الاستحقاق: ${inv.due_date ? new Date(inv.due_date).toLocaleDateString('ar-EG') : "—"}\n\nV-ACCOUNTING`);
                         const phone = prompt("رقم الهاتف (مع مفتاح الدولة):", "20");
                         if (phone) window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
                       }}
-                        className="text-gray-600 hover:text-green-400 transition text-xs">📱 واتساب</button>
+                        className="transition text-xs" style={{ color: "var(--color-text-muted)" }}>📱 واتساب</button>
                     )}
                     <button onClick={() => handleDelete(inv.id)}
-                      className="text-gray-600 hover:text-red-400 transition text-xs">حذف</button>
+                      className="transition text-xs" style={{ color: "var(--color-text-muted)" }}>حذف</button>
                   </td>
                 </tr>
               ))}

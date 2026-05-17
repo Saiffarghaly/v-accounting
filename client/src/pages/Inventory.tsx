@@ -37,6 +37,8 @@ interface Damage {
   created_by_name?: string;
 }
 
+const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
+
 const Inventory = () => {
   const { token, canEdit, canDelete } = useAuth();
   const [tab, setTab] = useState<"items" | "returns" | "damages">("items");
@@ -56,8 +58,6 @@ const Inventory = () => {
   const [listSearch, setListSearch] = useState("");
 
   const headers = { Authorization: `Bearer ${token}` };
-
-  const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
 
   const fetchItems = async () => {
     const res = await axios.get(`${API}/api/inventory`, { headers });
@@ -193,36 +193,42 @@ const Inventory = () => {
     [damages, listSearch]
   );
 
+  const tabs = [
+    { id: "items", label: "الأصناف" },
+    { id: "returns", label: "المرتجعات" },
+    { id: "damages", label: "الهوالك" },
+  ];
+
   return (
     <div className="p-8 space-y-6">
 
       <div className="grid grid-cols-4 gap-4">
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <p className="text-gray-400 text-sm mb-1">إجمالي الأصناف</p>
-          <p className="text-2xl font-bold text-amber-400">{items.length}</p>
+        <div className="rounded-xl p-5 border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+          <p className="text-sm mb-1" style={{ color: "var(--color-text-secondary)" }}>إجمالي الأصناف</p>
+          <p className="text-2xl font-bold" style={{ color: "var(--color-warning)" }}>{items.length}</p>
         </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <p className="text-gray-400 text-sm mb-1">قيمة المخزن (شراء)</p>
-          <p className="text-2xl font-bold text-blue-400">
+        <div className="rounded-xl p-5 border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+          <p className="text-sm mb-1" style={{ color: "var(--color-text-secondary)" }}>قيمة المخزن (شراء)</p>
+          <p className="text-2xl font-bold" style={{ color: "var(--color-info)" }}>
             {items.reduce((s, i) => s + Number(i.buy_price) * i.quantity, 0).toLocaleString()} ج
           </p>
         </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <p className="text-gray-400 text-sm mb-1">أصناف منخفضة</p>
-          <p className="text-2xl font-bold text-red-400">{lowStock.length}</p>
+        <div className="rounded-xl p-5 border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+          <p className="text-sm mb-1" style={{ color: "var(--color-text-secondary)" }}>أصناف منخفضة</p>
+          <p className="text-2xl font-bold" style={{ color: "var(--color-danger)" }}>{lowStock.length}</p>
         </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-          <p className="text-gray-400 text-sm mb-1">إجمالي المرتجعات</p>
-          <p className="text-2xl font-bold text-yellow-400">{returns.length}</p>
+        <div className="rounded-xl p-5 border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+          <p className="text-sm mb-1" style={{ color: "var(--color-text-secondary)" }}>إجمالي المرتجعات</p>
+          <p className="text-2xl font-bold" style={{ color: "var(--color-warning)" }}>{returns.length}</p>
         </div>
       </div>
 
       {lowStock.length > 0 && (
-        <div className="bg-red-400/10 border border-red-400/20 rounded-xl p-4">
-          <p className="text-red-400 font-medium mb-2">⚠️ أصناف تحتاج إعادة تخزين:</p>
+        <div className="rounded-xl p-4 border" style={{ background: "var(--color-danger-light)", borderColor: "var(--color-danger-light)" }}>
+          <p className="font-medium mb-2" style={{ color: "var(--color-danger)" }}>⚠️ أصناف تحتاج إعادة تخزين:</p>
           <div className="flex flex-wrap gap-2">
             {lowStock.map(i => (
-              <span key={i.id} className="bg-red-400/10 text-red-400 text-xs px-3 py-1 rounded-full">
+              <span key={i.id} className="text-xs px-3 py-1 rounded-full" style={{ background: "var(--color-danger-light)", color: "var(--color-danger)" }}>
                 {i.name} ({i.quantity} {i.unit})
               </span>
             ))}
@@ -230,16 +236,14 @@ const Inventory = () => {
         </div>
       )}
 
-      <div className="flex gap-2 border-b border-gray-800">
-        {[
-          { id: "items", label: "الأصناف" },
-          { id: "returns", label: "المرتجعات" },
-          { id: "damages", label: "الهوالك" },
-        ].map((t) => (
+      <div className="flex gap-2" style={{ borderBottom: "1px solid var(--color-border)" }}>
+        {tabs.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id as any)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
-              tab === t.id ? "border-amber-400 text-amber-400" : "border-transparent text-gray-500 hover:text-gray-300"
-            }`}>
+            className="px-4 py-2 text-sm font-medium border-b-2 transition"
+            style={{
+              borderColor: tab === t.id ? "var(--color-accent)" : "transparent",
+              color: tab === t.id ? "var(--color-accent)" : "var(--color-text-muted)",
+            }}>
             {t.label}
           </button>
         ))}
@@ -248,22 +252,22 @@ const Inventory = () => {
       {tab === "items" && (
         <div className="space-y-4">
           <div className="flex flex-wrap justify-end gap-2 items-center">
-            <ListSearchField variant="dark" value={listSearch} onChange={setListSearch} placeholder="بحث في الأصناف…" />
+            <ListSearchField variant="light" value={listSearch} onChange={setListSearch} placeholder="بحث في الأصناف…" />
             <button onClick={handleExport}
-              className="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-lg transition">
+              className="text-white text-sm px-4 py-2 rounded-lg transition" style={{ background: "var(--color-accent)" }}>
               تصدير Excel ⬇
             </button>
             {canEdit && (
               <button onClick={() => setShowForm(!showForm)}
-                className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg transition">
+                className="text-white text-sm px-4 py-2 rounded-lg transition" style={{ background: "#1a5c38" }}>
               + إضافة صنف
               </button>
             )}
           </div>
 
           {canEdit && showForm && (
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
-              <h4 className="font-medium text-gray-300">صنف جديد</h4>
+            <div className="rounded-xl p-6 border space-y-4" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+              <h4 className="font-medium" style={{ color: "var(--color-text-primary)" }}>صنف جديد</h4>
               <div className="grid grid-cols-3 gap-4">
                 {[
                   { key: "name", label: "اسم الصنف *", type: "text", placeholder: "اسم الصنف" },
@@ -276,35 +280,36 @@ const Inventory = () => {
                   { key: "min_quantity", label: "الحد الأدنى للتنبيه", type: "number", placeholder: "5" },
                 ].map((field) => (
                   <div key={field.key}>
-                    <label className="text-sm text-gray-400 mb-1 block">{field.label}</label>
+                    <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>{field.label}</label>
                     <input type={field.type} value={form[field.key as keyof typeof form]}
                       onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
                       placeholder={field.placeholder}
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500" />
+                      style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                      className="w-full border rounded-lg px-4 py-3 text-sm" />
                   </div>
                 ))}
               </div>
               <div className="flex gap-3">
                 <button onClick={handleAdd} disabled={loading}
-                  className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-sm px-6 py-2 rounded-lg transition">
+                  className="text-white text-sm px-6 py-2 rounded-lg transition disabled:opacity-50" style={{ background: "var(--color-accent)" }}>
                   {loading ? "جاري الحفظ..." : "حفظ"}
                 </button>
                 <button onClick={() => setShowForm(false)}
-                  className="bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm px-6 py-2 rounded-lg transition">
+                  className="px-6 py-2 rounded-lg transition text-sm" style={{ background: "var(--color-bg-input)", color: "var(--color-text-secondary)" }}>
                   إلغاء
                 </button>
               </div>
             </div>
           )}
 
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <div className="rounded-xl p-6 border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
             {items.length === 0 ? (
-              <div className="text-center text-gray-600 py-8">
+              <div className="text-center py-8" style={{ color: "var(--color-text-muted)" }}>
                 <p className="text-3xl mb-2">📦</p>
                 <p>لا توجد أصناف بعد</p>
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="text-center text-gray-600 py-8">
+              <div className="text-center py-8" style={{ color: "var(--color-text-muted)" }}>
                 <p className="text-3xl mb-2">🔎</p>
                 <p>لا توجد نتائج تطابق البحث</p>
               </div>
@@ -312,7 +317,7 @@ const Inventory = () => {
               <div className="overflow-x-auto">
                 <table dir="rtl" lang="ar" className="w-full min-w-[56rem] border-collapse text-sm">
                   <thead>
-                    <tr className="text-gray-500 border-b border-gray-800">
+                    <tr style={{ color: "var(--color-text-muted)", borderBottom: "1px solid var(--color-border)" }}>
                       <th className="text-right pb-3 px-1">الصنف</th>
                       <th className="text-right pb-3 px-1">الفئة</th>
                       <th className="text-right pb-3 px-1">سعر الشراء</th>
@@ -324,25 +329,28 @@ const Inventory = () => {
                       <th className="text-right pb-3 px-1 w-14"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-800">
+                  <tbody>
                     {filteredItems.map((item) => (
-                      <tr key={item.id} className="text-gray-300">
-                        <td className="py-3 px-1 align-top font-medium">{item.name}</td>
-                        <td className="py-3 px-1 align-top text-gray-500">{item.category || "—"}</td>
-                        <td className="py-3 px-1 align-top whitespace-nowrap">{Number(item.buy_price).toLocaleString()} ج</td>
-                        <td className="py-3 px-1 align-top whitespace-nowrap">{Number(item.sell_wholesale).toLocaleString()} ج</td>
-                        <td className="py-3 px-1 align-top whitespace-nowrap">{Number(item.sell_retail).toLocaleString()} ج</td>
-                        <td className="py-3 px-1 align-top whitespace-nowrap">{item.quantity} {item.unit}</td>
+                      <tr key={item.id} style={{ borderBottom: "1px solid var(--color-border-light)" }}>
+                        <td className="py-3 px-1 align-top font-medium" style={{ color: "var(--color-text-primary)" }}>{item.name}</td>
+                        <td className="py-3 px-1 align-top" style={{ color: "var(--color-text-secondary)" }}>{item.category || "—"}</td>
+                        <td className="py-3 px-1 align-top whitespace-nowrap" style={{ color: "var(--color-text-primary)" }}>{Number(item.buy_price).toLocaleString()} ج</td>
+                        <td className="py-3 px-1 align-top whitespace-nowrap" style={{ color: "var(--color-text-primary)" }}>{Number(item.sell_wholesale).toLocaleString()} ج</td>
+                        <td className="py-3 px-1 align-top whitespace-nowrap" style={{ color: "var(--color-text-primary)" }}>{Number(item.sell_retail).toLocaleString()} ج</td>
+                        <td className="py-3 px-1 align-top whitespace-nowrap" style={{ color: "var(--color-text-primary)" }}>{item.quantity} {item.unit}</td>
                         <td className="py-3 px-1 align-top">
-                          <span className={`text-xs px-2 py-1 rounded-full ${item.quantity <= item.min_quantity ? "bg-red-400/10 text-red-400" : "bg-green-400/10 text-green-400"}`}>
+                          <span className="text-xs px-2 py-1 rounded-full font-medium" style={{
+                            background: item.quantity <= item.min_quantity ? "var(--color-danger-light)" : "var(--color-success-light)",
+                            color: item.quantity <= item.min_quantity ? "var(--color-danger)" : "var(--color-success)"
+                          }}>
                             {item.quantity <= item.min_quantity ? "منخفض" : "متوفر"}
                           </span>
                         </td>
-                        <td className="py-3 px-1 align-top text-gray-500 whitespace-nowrap">{item.created_by_name || "—"}</td>
+                        <td className="py-3 px-1 align-top whitespace-nowrap" style={{ color: "var(--color-text-muted)" }}>{item.created_by_name || "—"}</td>
                         <td className="py-3 px-1 align-top">
                           {canDelete && (
                             <button onClick={() => handleDelete(item.id)}
-                              className="text-gray-600 hover:text-red-400 transition text-xs">حذف</button>
+                              className="transition text-xs" style={{ color: "var(--color-text-muted)" }}>حذف</button>
                           )}
                         </td>
                       </tr>
@@ -358,65 +366,71 @@ const Inventory = () => {
       {tab === "returns" && (
         <div className="space-y-4">
           <div className="flex flex-wrap justify-end gap-2 items-center">
-            <ListSearchField variant="dark" value={listSearch} onChange={setListSearch} placeholder="بحث في المرتجعات…" />
+            <ListSearchField variant="light" value={listSearch} onChange={setListSearch} placeholder="بحث في المرتجعات…" />
             {canEdit && (
               <button onClick={() => setShowReturnForm(!showReturnForm)}
-                className="bg-amber-500 hover:bg-amber-600 text-white text-sm px-4 py-2 rounded-lg transition">
+                className="text-white text-sm px-4 py-2 rounded-lg transition" style={{ background: "#1a5c38" }}>
                 + تسجيل مرتجع
               </button>
             )}
           </div>
 
           {canEdit && showReturnForm && (
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
-              <h4 className="font-medium text-gray-300">مرتجع جديد</h4>
+            <div className="rounded-xl p-6 border space-y-4" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+              <h4 className="font-medium" style={{ color: "var(--color-text-primary)" }}>مرتجع جديد</h4>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-gray-400 mb-1 block">الصنف *</label>
+                  <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>الصنف *</label>
                   <select value={returnForm.item_id} onChange={(e) => setReturnForm({ ...returnForm, item_id: e.target.value })}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500">
+                    style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                    className="w-full border rounded-lg px-4 py-3 text-sm">
                     <option value="">اختر صنف</option>
                     {items.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-400 mb-1 block">الكمية *</label>
+                  <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>الكمية *</label>
                   <input type="number" value={returnForm.quantity} onChange={(e) => setReturnForm({ ...returnForm, quantity: e.target.value })}
-                    placeholder="0" className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500" />
+                    placeholder="0"
+                    style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                    className="w-full border rounded-lg px-4 py-3 text-sm" />
                 </div>
                 <div>
-                  <label className="text-sm text-gray-400 mb-1 block">النوع</label>
+                  <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>النوع</label>
                   <select value={returnForm.type} onChange={(e) => setReturnForm({ ...returnForm, type: e.target.value })}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500">
+                    style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                    className="w-full border rounded-lg px-4 py-3 text-sm">
                     <option value="return">مرتجع من عميل</option>
                     <option value="supplier">مرتجع لمورد</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-400 mb-1 block">السبب</label>
+                  <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>السبب</label>
                   <input type="text" value={returnForm.reason} onChange={(e) => setReturnForm({ ...returnForm, reason: e.target.value })}
-                    placeholder="سبب الإرجاع" className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500" />
+                    placeholder="سبب الإرجاع"
+                    style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                    className="w-full border rounded-lg px-4 py-3 text-sm" />
                 </div>
               </div>
               <div className="flex gap-3">
                 <button onClick={handleReturn} disabled={loading}
-                  className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-sm px-6 py-2 rounded-lg transition">
+                  className="text-white text-sm px-6 py-2 rounded-lg transition disabled:opacity-50" style={{ background: "var(--color-accent)" }}>
                   {loading ? "جاري الحفظ..." : "حفظ"}
                 </button>
                 <button onClick={() => setShowReturnForm(false)}
-                  className="bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm px-6 py-2 rounded-lg transition">إلغاء</button>
+                  className="px-6 py-2 rounded-lg transition text-sm" style={{ background: "var(--color-bg-input)", color: "var(--color-text-secondary)" }}>إلغاء</button>
               </div>
             </div>
           )}
 
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <div className="rounded-xl p-6 border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
             {returns.length === 0 ? (
-              <div className="text-center text-gray-600 py-8">
+              <div className="text-center py-8" style={{ color: "var(--color-text-muted)" }}>
                 <p className="text-3xl mb-2">↩️</p>
                 <p>لا توجد مرتجعات بعد</p>
               </div>
             ) : filteredReturns.length === 0 ? (
-              <div className="text-center text-gray-600 py-8">
+              <div className="text-center py-8" style={{ color: "var(--color-text-muted)" }}>
                 <p className="text-3xl mb-2">🔎</p>
                 <p>لا توجد نتائج تطابق البحث</p>
               </div>
@@ -424,7 +438,7 @@ const Inventory = () => {
               <div className="overflow-x-auto">
                 <table dir="rtl" lang="ar" className="w-full min-w-[40rem] border-collapse text-sm">
                   <thead>
-                    <tr className="text-gray-500 border-b border-gray-800">
+                    <tr style={{ color: "var(--color-text-muted)", borderBottom: "1px solid var(--color-border)" }}>
                       <th className="text-right pb-3 px-1">الصنف</th>
                       <th className="text-right pb-3 px-1">الكمية</th>
                       <th className="text-right pb-3 px-1">النوع</th>
@@ -433,19 +447,19 @@ const Inventory = () => {
                       <th className="text-right pb-3 px-1">بواسطة</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-800">
+                  <tbody>
                     {filteredReturns.map((r) => (
-                      <tr key={r.id} className="text-gray-300">
-                        <td className="py-3 px-1 align-top font-medium">{r.item_name}</td>
-                        <td className="py-3 px-1 align-top">{r.quantity}</td>
+                      <tr key={r.id} style={{ borderBottom: "1px solid var(--color-border-light)" }}>
+                        <td className="py-3 px-1 align-top font-medium" style={{ color: "var(--color-text-primary)" }}>{r.item_name}</td>
+                        <td className="py-3 px-1 align-top" style={{ color: "var(--color-text-primary)" }}>{r.quantity}</td>
                         <td className="py-3 px-1 align-top">
-                          <span className="text-xs px-2 py-1 rounded-full bg-yellow-400/10 text-yellow-400">
+                          <span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: "var(--color-warning-light)", color: "var(--color-warning)" }}>
                             {r.type === "return" ? "من عميل" : "لمورد"}
                           </span>
                         </td>
-                        <td className="py-3 px-1 align-top text-gray-500">{r.reason || "—"}</td>
-                        <td className="py-3 px-1 align-top text-gray-500 whitespace-nowrap">{new Date(r.date).toLocaleDateString('ar-EG')}</td>
-                        <td className="py-3 px-1 align-top text-gray-500 whitespace-nowrap">{r.created_by_name || "—"}</td>
+                        <td className="py-3 px-1 align-top" style={{ color: "var(--color-text-secondary)" }}>{r.reason || "—"}</td>
+                        <td className="py-3 px-1 align-top whitespace-nowrap" style={{ color: "var(--color-text-muted)" }}>{new Date(r.date).toLocaleDateString('ar-EG')}</td>
+                        <td className="py-3 px-1 align-top whitespace-nowrap" style={{ color: "var(--color-text-muted)" }}>{r.created_by_name || "—"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -459,57 +473,62 @@ const Inventory = () => {
       {tab === "damages" && (
         <div className="space-y-4">
           <div className="flex flex-wrap justify-end gap-2 items-center">
-            <ListSearchField variant="dark" value={listSearch} onChange={setListSearch} placeholder="بحث في الهوالك…" />
+            <ListSearchField variant="light" value={listSearch} onChange={setListSearch} placeholder="بحث في الهوالك…" />
             {canEdit && (
               <button onClick={() => setShowDamageForm(!showDamageForm)}
-                className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-lg transition">
+                className="text-white text-sm px-4 py-2 rounded-lg transition" style={{ background: "var(--color-danger)" }}>
                 + تسجيل هالك
               </button>
             )}
           </div>
 
           {canEdit && showDamageForm && (
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
-              <h4 className="font-medium text-gray-300">تسجيل هالك</h4>
+            <div className="rounded-xl p-6 border space-y-4" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+              <h4 className="font-medium" style={{ color: "var(--color-text-primary)" }}>تسجيل هالك</h4>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-gray-400 mb-1 block">الصنف *</label>
+                  <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>الصنف *</label>
                   <select value={damageForm.item_id} onChange={(e) => setDamageForm({ ...damageForm, item_id: e.target.value })}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-red-500">
+                    style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                    className="w-full border rounded-lg px-4 py-3 text-sm">
                     <option value="">اختر صنف</option>
                     {items.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm text-gray-400 mb-1 block">الكمية *</label>
+                  <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>الكمية *</label>
                   <input type="number" value={damageForm.quantity} onChange={(e) => setDamageForm({ ...damageForm, quantity: e.target.value })}
-                    placeholder="0" className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-red-500" />
+                    placeholder="0"
+                    style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                    className="w-full border rounded-lg px-4 py-3 text-sm" />
                 </div>
                 <div className="col-span-2">
-                  <label className="text-sm text-gray-400 mb-1 block">السبب</label>
+                  <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>السبب</label>
                   <input type="text" value={damageForm.reason} onChange={(e) => setDamageForm({ ...damageForm, reason: e.target.value })}
-                    placeholder="سبب الهلاك" className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-red-500" />
+                    placeholder="سبب الهلاك"
+                    style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                    className="w-full border rounded-lg px-4 py-3 text-sm" />
                 </div>
               </div>
               <div className="flex gap-3">
                 <button onClick={handleDamage} disabled={loading}
-                  className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm px-6 py-2 rounded-lg transition">
+                  className="text-white text-sm px-6 py-2 rounded-lg transition disabled:opacity-50" style={{ background: "var(--color-danger)" }}>
                   {loading ? "جاري الحفظ..." : "تسجيل"}
                 </button>
                 <button onClick={() => setShowDamageForm(false)}
-                  className="bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm px-6 py-2 rounded-lg transition">إلغاء</button>
+                  className="px-6 py-2 rounded-lg transition text-sm" style={{ background: "var(--color-bg-input)", color: "var(--color-text-secondary)" }}>إلغاء</button>
               </div>
             </div>
           )}
 
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <div className="rounded-xl p-6 border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
             {damages.length === 0 ? (
-              <div className="text-center text-gray-600 py-8">
+              <div className="text-center py-8" style={{ color: "var(--color-text-muted)" }}>
                 <p className="text-3xl mb-2">🗑️</p>
                 <p>لا توجد هوالك مسجلة</p>
               </div>
             ) : filteredDamages.length === 0 ? (
-              <div className="text-center text-gray-600 py-8">
+              <div className="text-center py-8" style={{ color: "var(--color-text-muted)" }}>
                 <p className="text-3xl mb-2">🔎</p>
                 <p>لا توجد نتائج تطابق البحث</p>
               </div>
@@ -517,7 +536,7 @@ const Inventory = () => {
               <div className="overflow-x-auto">
                 <table dir="rtl" lang="ar" className="w-full min-w-[36rem] border-collapse text-sm">
                   <thead>
-                    <tr className="text-gray-500 border-b border-gray-800">
+                    <tr style={{ color: "var(--color-text-muted)", borderBottom: "1px solid var(--color-border)" }}>
                       <th className="text-right pb-3 px-1">الصنف</th>
                       <th className="text-right pb-3 px-1">الكمية</th>
                       <th className="text-right pb-3 px-1">السبب</th>
@@ -525,14 +544,14 @@ const Inventory = () => {
                       <th className="text-right pb-3 px-1">بواسطة</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-800">
+                  <tbody>
                     {filteredDamages.map((d) => (
-                      <tr key={d.id} className="text-gray-300">
-                        <td className="py-3 px-1 align-top font-medium">{d.item_name}</td>
-                        <td className="py-3 px-1 align-top text-red-400">{d.quantity}</td>
-                        <td className="py-3 px-1 align-top text-gray-500">{d.reason || "—"}</td>
-                        <td className="py-3 px-1 align-top text-gray-500 whitespace-nowrap">{new Date(d.date).toLocaleDateString('ar-EG')}</td>
-                        <td className="py-3 px-1 align-top text-gray-500 whitespace-nowrap">{d.created_by_name || "—"}</td>
+                      <tr key={d.id} style={{ borderBottom: "1px solid var(--color-border-light)" }}>
+                        <td className="py-3 px-1 align-top font-medium" style={{ color: "var(--color-text-primary)" }}>{d.item_name}</td>
+                        <td className="py-3 px-1 align-top" style={{ color: "var(--color-danger)" }}>{d.quantity}</td>
+                        <td className="py-3 px-1 align-top" style={{ color: "var(--color-text-secondary)" }}>{d.reason || "—"}</td>
+                        <td className="py-3 px-1 align-top whitespace-nowrap" style={{ color: "var(--color-text-muted)" }}>{new Date(d.date).toLocaleDateString('ar-EG')}</td>
+                        <td className="py-3 px-1 align-top whitespace-nowrap" style={{ color: "var(--color-text-muted)" }}>{d.created_by_name || "—"}</td>
                       </tr>
                     ))}
                   </tbody>

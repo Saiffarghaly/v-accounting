@@ -11,9 +11,9 @@ interface User {
 }
 
 const roleColor = (role: string) => {
-  if (role === "owner") return "bg-blue-400/10 text-blue-400";
-  if (role === "accountant") return "bg-green-400/10 text-green-400";
-  return "bg-gray-400/10 text-gray-400";
+  if (role === "owner") return { bg: "var(--color-info-light)", color: "var(--color-info)" };
+  if (role === "accountant") return { bg: "var(--color-success-light)", color: "var(--color-success)" };
+  return { bg: "var(--color-bg-input)", color: "var(--color-text-muted)" };
 };
 
 const roleLabel = (role: string) => {
@@ -21,6 +21,8 @@ const roleLabel = (role: string) => {
   if (role === "accountant") return "محاسب";
   return "موظف";
 };
+
+const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
 
 const Users = () => {
   const { token } = useAuth();
@@ -34,7 +36,7 @@ const Users = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("${import.meta.env.VITE_API_URL}/api/users", { headers });
+      const res = await axios.get(`${API}/api/users`, { headers });
       setUsers(res.data);
     } catch (err) {
       console.error(err);
@@ -48,12 +50,12 @@ const Users = () => {
     setLoading(true);
     setError("");
     try {
-      await axios.post("${import.meta.env.VITE_API_URL}/api/users", form, { headers });
+      await axios.post(`${API}/api/users`, form, { headers });
       setForm({ name: "", email: "", password: "", role: "accountant" });
       setShowForm(false);
       fetchUsers();
     } catch (err: any) {
-      setError(err.response?.data?.error || "Something went wrong");
+      setError(err.response?.data?.error || "حدث خطأ");
     } finally {
       setLoading(false);
     }
@@ -61,7 +63,7 @@ const Users = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/api/users/${id}`, { headers });
+      await axios.delete(`${API}/api/users/${id}`, { headers });
       fetchUsers();
     } catch (err) {
       console.error(err);
@@ -71,82 +73,66 @@ const Users = () => {
   return (
     <div className="p-8 space-y-6">
 
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">المستخدمون</h3>
-          <p className="text-sm text-gray-500">{users.length} مستخدم في المكتب</p>
+          <h3 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>المستخدمون</h3>
+          <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>{users.length} مستخدم في المكتب</p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition"
-        >
+        <button onClick={() => setShowForm(!showForm)}
+          className="text-white text-sm px-4 py-2 rounded-lg transition" style={{ background: "var(--color-accent)" }}>
           + إضافة مستخدم
         </button>
       </div>
 
-      {/* Roles Info */}
       <div className="grid grid-cols-3 gap-4">
         {[
           { role: "owner", label: "مالك", desc: "كل الصلاحيات — إضافة وتعديل وحذف وإدارة المستخدمين", icon: "👑" },
           { role: "accountant", label: "محاسب", desc: "إضافة وتعديل المعاملات والفواتير والعملاء", icon: "📊" },
           { role: "employee", label: "موظف", desc: "عرض البيانات فقط بدون تعديل", icon: "👁️" },
         ].map((r) => (
-          <div key={r.role} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <div key={r.role} className="rounded-xl p-4 border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
             <p className="text-xl mb-2">{r.icon}</p>
-            <p className="font-medium mb-1">{r.label}</p>
-            <p className="text-xs text-gray-500">{r.desc}</p>
+            <p className="font-medium mb-1" style={{ color: "var(--color-text-primary)" }}>{r.label}</p>
+            <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>{r.desc}</p>
           </div>
         ))}
       </div>
 
-      {/* Add Form */}
       {showForm && (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
-          <h4 className="font-medium text-gray-300">مستخدم جديد</h4>
+        <div className="rounded-xl p-6 border space-y-4" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+          <h4 className="font-medium" style={{ color: "var(--color-text-primary)" }}>مستخدم جديد</h4>
           {error && (
-            <div className="bg-red-400/10 border border-red-400/20 text-red-400 text-sm rounded-lg px-4 py-3">
+            <div className="rounded-lg px-4 py-3 text-sm" style={{ background: "var(--color-danger-light)", color: "var(--color-danger)" }}>
               {error}
             </div>
           )}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">الاسم *</label>
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>الاسم *</label>
+              <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="اسم المستخدم"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500"
-              />
+                style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                className="w-full border rounded-lg px-4 py-3 text-sm" />
             </div>
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">البريد الإلكتروني *</label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>البريد الإلكتروني *</label>
+              <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="email@example.com"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500"
-              />
+                style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                className="w-full border rounded-lg px-4 py-3 text-sm" />
             </div>
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">كلمة المرور *</label>
-              <input
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
+              <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>كلمة المرور *</label>
+              <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder="••••••••"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500"
-              />
+                style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                className="w-full border rounded-lg px-4 py-3 text-sm" />
             </div>
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">الدور</label>
-              <select
-                value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value })}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500"
-              >
+              <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>الدور</label>
+              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}
+                style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                className="w-full border rounded-lg px-4 py-3 text-sm">
                 <option value="accountant">محاسب</option>
                 <option value="employee">موظف</option>
                 <option value="owner">مالك</option>
@@ -154,34 +140,28 @@ const Users = () => {
             </div>
           </div>
           <div className="flex gap-3">
-            <button
-              onClick={handleAdd}
-              disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm px-6 py-2 rounded-lg transition"
-            >
+            <button onClick={handleAdd} disabled={loading}
+              className="text-white text-sm px-6 py-2 rounded-lg transition disabled:opacity-50" style={{ background: "var(--color-accent)" }}>
               {loading ? "جاري الحفظ..." : "إضافة"}
             </button>
-            <button
-              onClick={() => setShowForm(false)}
-              className="bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm px-6 py-2 rounded-lg transition"
-            >
+            <button onClick={() => setShowForm(false)}
+              className="px-6 py-2 rounded-lg transition text-sm" style={{ background: "var(--color-bg-input)", color: "var(--color-text-secondary)" }}>
               إلغاء
             </button>
           </div>
         </div>
       )}
 
-      {/* Users List */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+      <div className="rounded-xl p-6 border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
         {users.length === 0 ? (
-          <div className="text-center text-gray-600 py-8">
+          <div className="text-center py-8" style={{ color: "var(--color-text-muted)" }}>
             <p className="text-3xl mb-2">👥</p>
             <p>لا يوجد مستخدمون بعد</p>
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-gray-500 border-b border-gray-800">
+              <tr style={{ color: "var(--color-text-muted)", borderBottom: "1px solid var(--color-border)" }}>
                 <th className="text-right pb-3">الاسم</th>
                 <th className="text-right pb-3">البريد الإلكتروني</th>
                 <th className="text-right pb-3">الدور</th>
@@ -189,24 +169,22 @@ const Users = () => {
                 <th className="text-right pb-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800">
+            <tbody>
               {users.map((user) => (
-                <tr key={user.id} className="text-gray-300">
+                <tr key={user.id} style={{ color: "var(--color-text-primary)", borderBottom: "1px solid var(--color-border-light)" }}>
                   <td className="py-3 font-medium">{user.name}</td>
-                  <td className="py-3 text-gray-500">{user.email}</td>
+                  <td className="py-3" style={{ color: "var(--color-text-secondary)" }}>{user.email}</td>
                   <td className="py-3">
-                    <span className={`text-xs px-2 py-1 rounded-full ${roleColor(user.role)}`}>
+                    <span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: roleColor(user.role).bg, color: roleColor(user.role).color }}>
                       {roleLabel(user.role)}
                     </span>
                   </td>
-                  <td className="py-3 text-gray-500">
+                  <td className="py-3" style={{ color: "var(--color-text-secondary)" }}>
                     {new Date(user.created_at).toLocaleDateString('ar-EG')}
                   </td>
                   <td className="py-3">
-                    <button
-                      onClick={() => handleDelete(user.id)}
-                      className="text-gray-600 hover:text-red-400 transition text-xs"
-                    >
+                    <button onClick={() => handleDelete(user.id)}
+                      className="transition text-xs" style={{ color: "var(--color-text-muted)" }}>
                       حذف
                     </button>
                   </td>
