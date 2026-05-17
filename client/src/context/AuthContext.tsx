@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 
 interface Office {
@@ -21,27 +21,40 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [token, setToken] = useState<string | null>(null);
-  const [office, setOffice] = useState<Office | null>(null);
-  const [role, setRole] = useState<string>("owner");
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
+  const [office, setOffice] = useState<Office | null>(() => {
+    try {
+      const stored = localStorage.getItem("office");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [role, setRole] = useState<string>(() => localStorage.getItem("role") || "owner");
+
+  useEffect(() => {
+    if (token) {
+      localStorage.setItem("token", token);
+      localStorage.setItem("office", JSON.stringify(office));
+      localStorage.setItem("role", role);
+    } else {
+      localStorage.removeItem("token");
+      localStorage.removeItem("office");
+      localStorage.removeItem("role");
+    }
+  }, [token, office, role]);
 
   const login = (token: string, office: Office, userRole?: string) => {
     const finalRole = userRole || "owner";
     setToken(token);
     setOffice(office);
     setRole(finalRole);
-    localStorage.setItem("token", token);
-    localStorage.setItem("office", JSON.stringify(office));
-    localStorage.setItem("role", finalRole);
   };
 
   const logout = () => {
     setToken(null);
     setOffice(null);
     setRole("owner");
-    localStorage.removeItem("token");
-    localStorage.removeItem("office");
-    localStorage.removeItem("role");
   };
 
   const canEdit = role === "owner" || role === "accountant";
