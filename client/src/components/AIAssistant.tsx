@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 
@@ -28,7 +28,6 @@ interface StatsData {
 
 const AIAssistant = () => {
   const { token } = useAuth();
-  const headers = { Authorization: `Bearer ${token}` };
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", text: "مرحباً! 👋 أنا مساعد V-Accounting الذكي.\n\nأقدر أقرألك التقارير **وأيضاً** أنفذ أوامرك!\n\n💡 جرب:\n• 📋 \"اعمل فاتورة لأحمد 500\"\n• 💸 \"إضافة مصروف 300 نظافة\"\n• 💰 \"إضافة إيراد 1000 مشروع\"\n• 👤 \"عميل جديد محمد 01000000000\"\n• 📊 \"تقرير الشهر ده\"\n• 🔥 \"أعلى مصاريف\"" },
@@ -41,10 +40,11 @@ const AIAssistant = () => {
 
   useEffect(() => {
     if (open && !statsData) {
-      axios.get(`${API}/api/stats`, { headers })
+      const h = { Authorization: `Bearer ${token}` };
+      axios.get(`${API}/api/stats`, { headers: h })
         .then(r => setStatsData(r.data))
         .catch(console.error);
-      axios.get(`${API}/api/clients`, { headers })
+      axios.get(`${API}/api/clients`, { headers: h })
         .then(r => setClients(r.data))
         .catch(console.error);
     }
@@ -60,10 +60,9 @@ const AIAssistant = () => {
     return match ? match.id : null;
   };
 
-  const executeAction = useCallback(async (q: string): Promise<string | null> => {
-    /* ---------- Arabic Commands ---------- */
+  const executeAction = async (q: string): Promise<string | null> => {
+    const h = { Authorization: `Bearer ${token}` };
 
-    /* فاتورة جديدة: "اعمل فاتورة لأحمد 500" or "فاتورة محمد 1000" */
     const invoiceMatch = q.match(/(فاتورة|invoice|اعمل فاتورة)\s*(لـ|ل|)\s*([\u0600-\u06FF\s]+?)\s*(\d+[\.\d]*)/i);
     if (invoiceMatch) {
       const clientName = invoiceMatch[3].trim();
@@ -71,46 +70,43 @@ const AIAssistant = () => {
       const clientId = findClientId(clientName);
       if (!clientId) return `❌ ما لقيتش عميل اسمه "${clientName}".\nأضيفه أولاً: "عميل جديد ${clientName}"`;
       try {
-        await axios.post(`${API}/api/invoices`, { client_id: clientId, amount, status: "pending" }, { headers });
+        await axios.post(`${API}/api/invoices`, { client_id: clientId, amount, status: "pending" }, { headers: h });
         return `✅ تم إنشاء فاتورة جديدة!\n👤 العميل: ${clientName}\n💰 المبلغ: ${amount.toLocaleString()} ج\n📄 الحالة: معلقة`;
       } catch (e: any) {
         return `❌ فشل إنشاء الفاتورة: ${e.response?.data?.error || e.message}`;
       }
     }
 
-    /* مصروف جديد: "إضافة مصروف 300 نظافة" or "مصروف 200 كهرباء" */
     const expenseMatch = q.match(/(إضافة|اضافة|تسجيل|)\s*(مصروف|expense)\s*(\d+[\.\d]*)\s*([\u0600-~\s]+)?/i);
     if (expenseMatch) {
       const amount = parseFloat(expenseMatch[3]);
       const category = expenseMatch[4]?.trim() || "أخرى";
       try {
-        await axios.post(`${API}/api/transactions`, { amount, type: "مصروف", category, description: category }, { headers });
+        await axios.post(`${API}/api/transactions`, { amount, type: "مصروف", category, description: category }, { headers: h });
         return `✅ تم تسجيل المصروف!\n💰 المبلغ: ${amount.toLocaleString()} ج\n📂 التصنيف: ${category}`;
       } catch (e: any) {
         return `❌ فشل تسجيل المصروف: ${e.response?.data?.error || e.message}`;
       }
     }
 
-    /* إيراد جديد: "إضافة إيراد 1000 مشروع" or "إيراد 500" */
     const incomeMatch = q.match(/(إضافة|اضافة|تسجيل|)\s*(إيراد|ايراد|income)\s*(\d+[\.\d]*)\s*([\u0600-~\s]+)?/i);
     if (incomeMatch) {
       const amount = parseFloat(incomeMatch[3]);
       const category = incomeMatch[4]?.trim() || "أخرى";
       try {
-        await axios.post(`${API}/api/transactions`, { amount, type: "إيراد", category, description: category }, { headers });
+        await axios.post(`${API}/api/transactions`, { amount, type: "إيراد", category, description: category }, { headers: h });
         return `✅ تم تسجيل الإيراد!\n💰 المبلغ: ${amount.toLocaleString()} ج\n📂 التصنيف: ${category}`;
       } catch (e: any) {
         return `❌ فشل تسجيل الإيراد: ${e.response?.data?.error || e.message}`;
       }
     }
 
-    /* عميل جديد: "عميل جديد محمد 01000000000" */
     const clientMatch = q.match(/(عميل جديد|إضافة عميل|اضافة عميل|client)\s*([\u0600-\u06FF\s]+?)(?:\s*(\d+))?\s*$/i);
     if (clientMatch) {
       const name = clientMatch[2].trim();
       const phone = clientMatch[3] || "";
       try {
-        await axios.post(`${API}/api/clients`, { name, phone }, { headers });
+        await axios.post(`${API}/api/clients`, { name, phone }, { headers: h });
         const addon = phone ? `\n📞 الهاتف: ${phone}` : "";
         return `✅ تم إضافة العميل!\n👤 الاسم: ${name}${addon}\n🆔 أضف فاتورة له: "فاتورة ${name} [المبلغ]"`;
       } catch (e: any) {
@@ -118,24 +114,20 @@ const AIAssistant = () => {
       }
     }
 
-    /* صنف مخزون جديد: "إضافة صنف كرسي 10 200" */
     const itemMatch = q.match(/(إضافة صنف|اضافة صنف|صنف جديد|item)\s*([\u0600-\u06FF\s]+?)\s*(\d+)\s*(\d+[\.\d]*)/i);
     if (itemMatch) {
       const name = itemMatch[2].trim();
       const quantity = parseInt(itemMatch[3]);
       const price = parseFloat(itemMatch[4]);
       try {
-        await axios.post(`${API}/api/inventory`, { name, quantity, buy_price: price, unit: "قطعة" }, { headers });
+        await axios.post(`${API}/api/inventory`, { name, quantity, buy_price: price, unit: "قطعة" }, { headers: h });
         return `✅ تم إضافة الصنف للمخزن!\n📦 ${name}\n🔢 الكمية: ${quantity}\n💰 سعر الشراء: ${price.toLocaleString()} ج`;
       } catch (e: any) {
         return `❌ فشل إضافة الصنف: ${e.response?.data?.error || e.message}`;
       }
     }
 
-    /* ---------- English Commands ---------- */
     const lower = q.toLowerCase();
-
-    /* "Create invoice for [name] [amount]" */
     const enInvMatch = lower.match(/create\s+invoice\s+for\s+([a-zA-Z\s]+?)\s*(\d+[\.\d]*)/i);
     if (enInvMatch) {
       const clientName = enInvMatch[1].trim();
@@ -143,55 +135,58 @@ const AIAssistant = () => {
       const clientId = findClientId(clientName);
       if (!clientId) return `❌ Client "${clientName}" not found. Add first: "add client ${clientName}"`;
       try {
-        await axios.post(`${API}/api/invoices`, { client_id: clientId, amount, status: "pending" }, { headers });
+        await axios.post(`${API}/api/invoices`, { client_id: clientId, amount, status: "pending" }, { headers: h });
         return `✅ Invoice created!\n👤 Client: ${clientName}\n💰 Amount: ${amount.toLocaleString()} EGP`;
       } catch (e: any) {
         return `❌ Failed: ${e.response?.data?.error || e.message}`;
       }
     }
 
-    /* "Add expense [amount] [category]" */
     const enExpMatch = lower.match(/add\s+expense\s*(\d+[\.\d]*)\s*([a-zA-Z\s]+)?/i);
     if (enExpMatch) {
       const amount = parseFloat(enExpMatch[1]);
       const category = enExpMatch[2]?.trim() || "Other";
       try {
-        await axios.post(`${API}/api/transactions`, { amount, type: "مصروف", category, description: category }, { headers });
+        await axios.post(`${API}/api/transactions`, { amount, type: "مصروف", category, description: category }, { headers: h });
         return `✅ Expense recorded!\n💰 Amount: ${amount.toLocaleString()} EGP\n📂 Category: ${category}`;
-      } catch { }
+      } catch (e: any) {
+        return `❌ Failed: ${e.response?.data?.error || e.message}`;
+      }
     }
 
-    /* "Add income [amount] [category]" */
     const enIncMatch = lower.match(/add\s+income\s*(\d+[\.\d]*)\s*([a-zA-Z\s]+)?/i);
     if (enIncMatch) {
       const amount = parseFloat(enIncMatch[1]);
       const category = enIncMatch[2]?.trim() || "Other";
       try {
-        await axios.post(`${API}/api/transactions`, { amount, type: "إيراد", category, description: category }, { headers });
+        await axios.post(`${API}/api/transactions`, { amount, type: "إيراد", category, description: category }, { headers: h });
         return `✅ Income recorded!\n💰 Amount: ${amount.toLocaleString()} EGP\n📂 Category: ${category}`;
-      } catch { }
+      } catch (e: any) {
+        return `❌ Failed: ${e.response?.data?.error || e.message}`;
+      }
     }
 
-    /* "Add client [name] [phone]" */
     const enCliMatch = lower.match(/add\s+client\s+([a-zA-Z\s]+?)(?:\s*(\d+))?\s*$/i);
     if (enCliMatch) {
       const name = enCliMatch[1].trim();
       const phone = enCliMatch[2] || "";
       try {
-        await axios.post(`${API}/api/clients`, { name, phone }, { headers });
+        await axios.post(`${API}/api/clients`, { name, phone }, { headers: h });
         const addon = phone ? `\n📞 Phone: ${phone}` : "";
         return `✅ Client added!\n👤 ${name}${addon}`;
-      } catch { }
+      } catch (e: any) {
+        return `❌ Failed: ${e.response?.data?.error || e.message}`;
+      }
     }
 
-    return null; /* not an action command */
-  }, [clients, headers]);
+    return null;
+  };
 
   const generateReply = (q: string, data: StatsData): string => {
     const lower = q.toLowerCase();
 
     if (/تقرير|ملخص/.test(lower) && /(الشهر|شهر|الحالي)/.test(lower)) {
-      const m = data.monthlyData;
+      const m = (data as any).monthlyData;
       const current = m?.[m.length - 1];
       if (current) {
         return `📊 **تقرير ${current.month}**\n• الإيرادات: ${Number(current.income).toLocaleString()} ج\n• المصروفات: ${Number(current.expenses).toLocaleString()} ج\n• صافي الربح: ${(Number(current.income) - Number(current.expenses)).toLocaleString()} ج\n• إجمالي الإيرادات: ${data.income.toLocaleString()} ج\n• إجمالي المصروفات: ${data.expenses.toLocaleString()} ج`;
@@ -243,15 +238,13 @@ const AIAssistant = () => {
     setLoading(true);
 
     try {
-      /* Try action command first */
       const actionResult = await executeAction(q);
       if (actionResult) {
         setMessages(prev => [...prev, { role: "assistant", text: actionResult }]);
-        /* Refresh stats after action */
-        axios.get(`${API}/api/stats`, { headers }).then(r => setStatsData(r.data)).catch(() => {});
-        axios.get(`${API}/api/clients`, { headers }).then(r => setClients(r.data)).catch(() => {});
+        const h = { Authorization: `Bearer ${token}` };
+        axios.get(`${API}/api/stats`, { headers: h }).then(r => setStatsData(r.data)).catch(() => {});
+        axios.get(`${API}/api/clients`, { headers: h }).then(r => setClients(r.data)).catch(() => {});
       } else if (statsData) {
-        /* Fall back to Q&A */
         const reply = generateReply(q, statsData);
         if (reply) {
           setMessages(prev => [...prev, { role: "assistant", text: reply }]);
