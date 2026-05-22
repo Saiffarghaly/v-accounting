@@ -1,4 +1,3 @@
-const path = require('path');
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
@@ -27,10 +26,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve built client static files
-const clientDist = path.join(__dirname, '..', '..', 'client', 'dist');
-app.use(express.static(clientDist));
-
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/clients', clientRoutes);
@@ -48,9 +43,8 @@ app.use('/api/bank', bankRoutes);
 app.use('/api/supplier-debts', supplierDebtsRoutes);
 app.use('/api/employee-loans', employeeLoansRoutes);
 
-// SPA catch-all: serve index.html for any non-API route
-app.get(/^\/(?!api).*/, (req, res) => {
-  res.sendFile(path.join(clientDist, 'index.html'));
+app.get('/', (req, res) => {
+  res.json({ message: '🎉 V-ACCOUNTING API is running!' });
 });
 
 const PORT = process.env.PORT || 5000;
