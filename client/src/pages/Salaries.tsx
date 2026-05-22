@@ -20,6 +20,24 @@ interface Payment {
   notes: string;
 }
 
+interface Loan {
+  id: number;
+  employee_id: number;
+  employee_name: string;
+  amount: number;
+  remaining: number;
+  description: string;
+  date: string;
+  status: string;
+}
+
+interface LoanPayment {
+  id: number;
+  loan_id: number;
+  amount: number;
+  date: string;
+}
+
 interface Report {
   month: string;
   total_employees: number;
@@ -39,9 +57,12 @@ const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.
 
 const Salaries = () => {
   const { token, canEdit } = useAuth();
-  const [tab, setTab] = useState<"employees" | "pay" | "report">("employees");
+  const [tab, setTab] = useState<"employees" | "pay" | "report" | "loans">("employees");
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [loans, setLoans] = useState<Loan[]>([]);
+  const [selectedLoanPayments, setSelectedLoanPayments] = useState<LoanPayment[]>([]);
+  const [selectedLoanId, setSelectedLoanId] = useState<number | null>(null);
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -53,6 +74,11 @@ const Salaries = () => {
     employee_id: "", amount: "", month: new Date().toISOString().slice(0, 7),
     date: new Date().toISOString().split("T")[0], notes: ""
   });
+  const [loanDeductions, setLoanDeductions] = useState<{ loan_id: number; amount: string }[]>([]);
+  const [activeLoans, setActiveLoans] = useState<Loan[]>([]);
+
+  // Add loan form
+  const [loanForm, setLoanForm] = useState({ employee_id: "", amount: "", description: "", date: new Date().toISOString().split("T")[0] });
 
   // Report month
   const [reportMonth, setReportMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -73,6 +99,20 @@ const Salaries = () => {
     } catch (err) { console.error(err); }
   };
 
+  const fetchLoans = async () => {
+    try {
+      const res = await axios.get(`${API}/api/employee-loans`, { headers });
+      setLoans(res.data);
+    } catch (err) { console.error(err); }
+  };
+
+  const fetchLoanPayments = async (loanId: number) => {
+    try {
+      const res = await axios.get(`${API}/api/employee-loans/${loanId}/payments`, { headers });
+      setSelectedLoanPayments(res.data);
+    } catch (err) { console.error(err); }
+  };
+
   const fetchReport = async (month: string) => {
     try {
       const res = await axios.get(`${API}/api/salaries/report/${month}`, { headers });
@@ -80,7 +120,7 @@ const Salaries = () => {
     } catch (err) { console.error(err); }
   };
 
-  useEffect(() => { fetchEmployees(); }, []);
+  useEffect(() => { fetchEmployees(); fetchLoans(); }, []);
 
   const handleAddEmployee = async () => {
     if (!empForm.name) return;
@@ -100,24 +140,51 @@ const Salaries = () => {
     } catch (err) { console.error(err); }
   };
 
+  const handleEmployeeSelect = (employeeId: string) => {
+    const emp = employees.find(x => x.id === Number(employeeId));
+    const empLoans = loans.filter(l => l.employee_id === Number(employeeId) && l.status === "active");
+    setActiveLoans(empLoans);
+    setLoanDeductions(empLoans.map(l => ({ loan_id: l.id, amount: "0" })));
+    setPayForm({ ...payForm, employee_id: employeeId, amount: emp ? String(emp.salary) : "" });
+  };
+
   const handlePaySalary = async () => {
     if (!payForm.employee_id || !payForm.amount) return;
     setLoading(true);
     try {
-      await axios.post(`${API}/api/salaries/payments`, payForm, { headers });
+      const deductions = loanDeductions.filter(d => Number(d.amount) > 0).map(d => ({ loan_id: d.loan_id, amount: Number(d.amount) }));
+      await axios.post(`${API}/api/salaries/payments`, { ...payForm, loan_deductions: deductions.length > 0 ? deductions : undefined }, { headers });
       setPayForm({
         employee_id: "", amount: "", month: new Date().toISOString().slice(0, 7),
         date: new Date().toISOString().split("T")[0], notes: ""
       });
+      setActiveLoans([]);
+      setLoanDeductions([]);
       fetchEmployees();
       fetchPayments();
+      fetchLoans();
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
 
+  const handleAddLoan = async () => {
+    if (!loanForm.employee_id || !loanForm.amount) return;
+    setLoading(true);
+    try {
+      await axios.post(`${API}/api/employee-loans`, loanForm, { headers });
+      setLoanForm({ employee_id: "", amount: "", description: "", date: new Date().toISOString().split("T")[0] });
+      fetchLoans();
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
+  };
+
+  const totalDeductions = loanDeductions.reduce((s, d) => s + Number(d.amount || 0), 0);
+  const netAmount = Number(payForm.amount || 0) - totalDeductions;
+
   const tabs = [
     { id: "employees" as const, label: "قائمة الموظفين", icon: "👨‍💼" },
     { id: "pay" as const, label: "صرف الرواتب", icon: "💰" },
+    { id: "loans" as const, label: "السلف والخصمات", icon: "💳" },
     { id: "report" as const, label: "تقرير شهر", icon: "📊" },
   ];
 
@@ -221,10 +288,7 @@ const Salaries = () => {
             <div>
               <label className="text-sm mb-1 block" style={{ color: "#555" }}>الموظف *</label>
               <select value={payForm.employee_id}
-                onChange={(e) => {
-                  const emp = employees.find(x => x.id === Number(e.target.value));
-                  setPayForm({ ...payForm, employee_id: e.target.value, amount: emp ? String(emp.salary) : "" });
-                }}
+                onChange={(e) => handleEmployeeSelect(e.target.value)}
                 className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none"
                 style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }}>
                 <option value="">اختر الموظف</option>
@@ -263,9 +327,43 @@ const Salaries = () => {
                   style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }} />
               </div>
             </div>
-            <button onClick={handlePaySalary} disabled={loading || !payForm.employee_id || !payForm.amount}
+
+            {/* Active loans / deductions */}
+            {activeLoans.length > 0 && (
+              <div className="rounded-lg p-4 space-y-3" style={{ background: "#fff8e1", border: "1px solid #ffe082" }}>
+                <p className="text-sm font-semibold" style={{ color: "#e65100" }}>السلف النشطة - أدخل مبلغ الخصم لكل سلفة</p>
+                {activeLoans.map((l, i) => (
+                  <div key={l.id} className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <p className="text-xs" style={{ color: "#555" }}>{l.description || "سلفة"} — المتبقي: {Number(l.remaining).toLocaleString()} ج</p>
+                    </div>
+                    <input type="number" value={loanDeductions[i]?.amount || "0"} min="0" max={l.remaining}
+                      onChange={(e) => {
+                        const updated = [...loanDeductions];
+                        updated[i] = { ...updated[i], amount: e.target.value };
+                        setLoanDeductions(updated);
+                      }}
+                      className="w-28 rounded-lg px-3 py-2 text-sm text-center focus:outline-none"
+                      style={{ background: "#fff", border: "1px solid #ddd", color: "#333" }}
+                      placeholder="الخصم" />
+                  </div>
+                ))}
+                <div className="flex justify-between pt-2 border-t" style={{ borderColor: "#ffe082" }}>
+                  <span className="text-sm" style={{ color: "#555" }}>إجمالي الخصم</span>
+                  <span className="text-sm font-bold" style={{ color: "#c62828" }}>{totalDeductions.toLocaleString()} ج</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm" style={{ color: "#555" }}>الصافي المستلم</span>
+                  <span className="text-sm font-bold" style={{ color: netAmount >= 0 ? "#217346" : "#c62828" }}>
+                    {netAmount.toLocaleString()} ج
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <button onClick={handlePaySalary} disabled={loading || !payForm.employee_id || !payForm.amount || netAmount < 0}
               className="text-white text-sm px-6 py-2.5 rounded-lg transition w-full"
-              style={{ background: loading || !payForm.employee_id || !payForm.amount ? "#81c784" : "#217346" }}>
+              style={{ background: loading || !payForm.employee_id || !payForm.amount || netAmount < 0 ? "#81c784" : "#217346" }}>
               {loading ? "جاري الحفظ..." : "صرف الراتب"}
             </button>
           </div>
@@ -289,6 +387,93 @@ const Salaries = () => {
                     </span>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab: السلف والخصمات */}
+      {tab === "loans" && (
+        <div className="grid grid-cols-2 gap-6">
+          <div className="rounded-xl p-6 border space-y-4" style={{ background: "#ffffff", borderColor: "#e0e0e0" }}>
+            <h4 className="font-semibold" style={{ color: "#1a1a1a" }}>إضافة سلفة جديدة</h4>
+            <div>
+              <label className="text-sm mb-1 block" style={{ color: "#555" }}>الموظف *</label>
+              <select value={loanForm.employee_id}
+                onChange={(e) => setLoanForm({ ...loanForm, employee_id: e.target.value })}
+                className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none"
+                style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }}>
+                <option value="">اختر الموظف</option>
+                {employees.map(emp => (
+                  <option key={emp.id} value={emp.id}>{emp.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm mb-1 block" style={{ color: "#555" }}>المبلغ *</label>
+              <input type="number" value={loanForm.amount}
+                onChange={(e) => setLoanForm({ ...loanForm, amount: e.target.value })}
+                placeholder="0" className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none"
+                style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }} />
+            </div>
+            <div>
+              <label className="text-sm mb-1 block" style={{ color: "#555" }}>البيان</label>
+              <input type="text" value={loanForm.description}
+                onChange={(e) => setLoanForm({ ...loanForm, description: e.target.value })}
+                placeholder="سبب السلفة" className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none"
+                style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }} />
+            </div>
+            <div>
+              <label className="text-sm mb-1 block" style={{ color: "#555" }}>التاريخ</label>
+              <input type="date" value={loanForm.date}
+                onChange={(e) => setLoanForm({ ...loanForm, date: e.target.value })}
+                className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none"
+                style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }} />
+            </div>
+            <button onClick={handleAddLoan} disabled={loading || !loanForm.employee_id || !loanForm.amount}
+              className="text-white text-sm px-6 py-2.5 rounded-lg transition w-full"
+              style={{ background: loading || !loanForm.employee_id || !loanForm.amount ? "#81c784" : "#217346" }}>
+              {loading ? "جاري الحفظ..." : "حفظ السلفة"}
+            </button>
+          </div>
+
+          <div className="rounded-xl p-6 border" style={{ background: "#ffffff", borderColor: "#e0e0e0" }}>
+            <h4 className="font-semibold mb-4" style={{ color: "#1a1a1a" }}>السلف النشطة</h4>
+            {loans.filter(l => l.status === "active").length === 0 ? (
+              <p className="text-center py-8 text-sm" style={{ color: "#bbb" }}>لا توجد سلف نشطة</p>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-auto">
+                {loans.filter(l => l.status === "active").map(l => (
+                  <div key={l.id} className="p-3 rounded-lg cursor-pointer transition"
+                    style={{ background: selectedLoanId === l.id ? "#e8f5e9" : "#f9f9f9" }}
+                    onClick={() => { setSelectedLoanId(l.id); fetchLoanPayments(l.id); }}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: "#333" }}>{l.employee_name}</p>
+                        <p className="text-xs" style={{ color: "#888" }}>{l.description || "سلفة"} · {new Date(l.date).toLocaleDateString('ar-EG')}</p>
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-bold" style={{ color: "#e65100" }}>{Number(l.remaining).toLocaleString()} ج</p>
+                        <p className="text-xs" style={{ color: "#aaa" }}>من {Number(l.amount).toLocaleString()} ج</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {selectedLoanId && selectedLoanPayments.length > 0 && (
+              <div className="mt-4 pt-4 border-t" style={{ borderColor: "#e0e0e0" }}>
+                <h5 className="text-sm font-semibold mb-3" style={{ color: "#555" }}>تاريخ الخصم</h5>
+                <div className="space-y-2 max-h-48 overflow-auto">
+                  {selectedLoanPayments.map(lp => (
+                    <div key={lp.id} className="flex items-center justify-between p-2 rounded-lg" style={{ background: "#f5f5f5" }}>
+                      <span className="text-xs" style={{ color: "#888" }}>{new Date(lp.date).toLocaleDateString('ar-EG')}</span>
+                      <span className="text-sm font-bold" style={{ color: "#c62828" }}>{Number(lp.amount).toLocaleString()} ج</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

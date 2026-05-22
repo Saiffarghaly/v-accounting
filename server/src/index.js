@@ -18,6 +18,8 @@ const debtsRoutes = require('./routes/debts');
 const alertsRoutes = require('./routes/alerts');
 const reportsRoutes = require('./routes/reports');
 const bankRoutes = require('./routes/bank');
+const supplierDebtsRoutes = require('./routes/supplier-debts');
+const employeeLoansRoutes = require('./routes/employee-loans');
 
 const app = express();
 
@@ -38,6 +40,8 @@ app.use('/api/debts', debtsRoutes);
 app.use('/api/alerts', alertsRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/bank', bankRoutes);
+app.use('/api/supplier-debts', supplierDebtsRoutes);
+app.use('/api/employee-loans', employeeLoansRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: '🎉 V-ACCOUNTING API is running!' });

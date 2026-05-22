@@ -15,7 +15,14 @@ interface Item {
   quantity: number;
   min_quantity: number;
   unit: string;
+  supplier_id?: number;
+  supplier_name?: string;
   created_by_name?: string;
+}
+
+interface Supplier {
+  id: number;
+  name: string;
 }
 
 interface Return {
@@ -49,15 +56,23 @@ const Inventory = () => {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: "", category: "", buy_price: "", sell_wholesale: "",
-    sell_retail: "", quantity: "", min_quantity: "5", unit: "قطعة"
+    sell_retail: "", quantity: "", min_quantity: "5", unit: "قطعة", supplier_id: ""
   });
   const [returnForm, setReturnForm] = useState({ item_id: "", quantity: "", reason: "", type: "return" });
   const [damageForm, setDamageForm] = useState({ item_id: "", quantity: "", reason: "" });
   const [showReturnForm, setShowReturnForm] = useState(false);
   const [showDamageForm, setShowDamageForm] = useState(false);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [listSearch, setListSearch] = useState("");
 
   const headers = { Authorization: `Bearer ${token}` };
+
+  const fetchSuppliers = async () => {
+    try {
+      const res = await axios.get(`${API}/api/suppliers`, { headers });
+      setSuppliers(res.data);
+    } catch (err) { console.error(err); }
+  };
 
   const fetchItems = async () => {
     const res = await axios.get(`${API}/api/inventory`, { headers });
@@ -78,6 +93,7 @@ const Inventory = () => {
     fetchItems();
     fetchReturns();
     fetchDamages();
+    fetchSuppliers();
   }, []);
 
   useEffect(() => {
@@ -88,8 +104,8 @@ const Inventory = () => {
     if (!form.name || !form.quantity) return;
     setLoading(true);
     try {
-      await axios.post(`${API}/api/inventory`, form, { headers });
-      setForm({ name: "", category: "", buy_price: "", sell_wholesale: "", sell_retail: "", quantity: "", min_quantity: "5", unit: "قطعة" });
+      await axios.post(`${API}/api/inventory`, { ...form, supplier_id: form.supplier_id || undefined }, { headers });
+      setForm({ name: "", category: "", buy_price: "", sell_wholesale: "", sell_retail: "", quantity: "", min_quantity: "5", unit: "قطعة", supplier_id: "" });
       setShowForm(false);
       fetchItems();
     } catch (err) { console.error(err); }
@@ -279,6 +295,27 @@ const Inventory = () => {
                   { key: "quantity", label: "الكمية *", type: "number", placeholder: "0" },
                   { key: "min_quantity", label: "الحد الأدنى للتنبيه", type: "number", placeholder: "5" },
                 ].map((field) => (
+                  field.key === "unit" ? (
+                    <React.Fragment key={field.key}>
+                      <div>
+                        <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>{field.label}</label>
+                        <input type={field.type} value={form[field.key as keyof typeof form]}
+                          onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
+                          placeholder={field.placeholder}
+                          style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                          className="w-full border rounded-lg px-4 py-3 text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>المورد</label>
+                        <select value={form.supplier_id} onChange={(e) => setForm({ ...form, supplier_id: e.target.value })}
+                          style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                          className="w-full border rounded-lg px-4 py-3 text-sm">
+                          <option value="">اختر المورد</option>
+                          {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </select>
+                      </div>
+                    </React.Fragment>
+                  ) : (
                   <div key={field.key}>
                     <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>{field.label}</label>
                     <input type={field.type} value={form[field.key as keyof typeof form]}
@@ -325,6 +362,7 @@ const Inventory = () => {
                       <th className="text-right pb-3 px-1">قطاعي</th>
                       <th className="text-right pb-3 px-1">الكمية</th>
                       <th className="text-right pb-3 px-1">الحالة</th>
+                      <th className="text-right pb-3 px-1">المورد</th>
                       <th className="text-right pb-3 px-1">بواسطة</th>
                       <th className="text-right pb-3 px-1 w-14"></th>
                     </tr>
@@ -346,6 +384,7 @@ const Inventory = () => {
                             {item.quantity <= item.min_quantity ? "منخفض" : "متوفر"}
                           </span>
                         </td>
+                        <td className="py-3 px-1 align-top whitespace-nowrap" style={{ color: "var(--color-text-secondary)" }}>{item.supplier_name || "—"}</td>
                         <td className="py-3 px-1 align-top whitespace-nowrap" style={{ color: "var(--color-text-muted)" }}>{item.created_by_name || "—"}</td>
                         <td className="py-3 px-1 align-top">
                           {canDelete && (

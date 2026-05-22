@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { matchesListSearch } from "../utils/listSearch";
 import { ListSearchField } from "../components/ListSearchField";
 
-type Destination = "transactions" | "clients" | "inventory" | "";
+type Destination = "transactions" | "clients" | "inventory" | "suppliers" | "treasury" | "debts" | "salaries" | "bank" | "";
 
 const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
 
@@ -24,10 +24,18 @@ const ImportExcel = () => {
 
   const headers = { Authorization: `Bearer ${token}` };
 
+  const [defaultTreasuryType, setDefaultTreasuryType] = useState("deposit");
+  const [defaultTreasurySource, setDefaultTreasurySource] = useState("cash");
+
   const destinations = [
     { id: "transactions", label: "الإيرادات والمصروفات", icon: "💰", desc: "استيراد معاملات مالية" },
     { id: "clients", label: "العملاء", icon: "👥", desc: "استيراد بيانات العملاء" },
     { id: "inventory", label: "المخزن", icon: "📦", desc: "استيراد أصناف المخزن" },
+    { id: "suppliers", label: "الموردين", icon: "🚚", desc: "استيراد بيانات الموردين" },
+    { id: "treasury", label: "الخزينة", icon: "🏦", desc: "استيراد حركات الخزينة" },
+    { id: "debts", label: "الديون", icon: "📋", desc: "استيراد ديون العملاء" },
+    { id: "salaries", label: "الرواتب", icon: "👨‍💼", desc: "استيراد بيانات الموظفين" },
+    { id: "bank", label: "البنوك", icon: "🏛️", desc: "استيراد حسابات بنكية" },
   ];
 
   const fieldsByDestination: Record<string, { key: string; label: string; required: boolean }[]> = {
@@ -52,6 +60,38 @@ const ImportExcel = () => {
       { key: "sell_retail", label: "سعر البيع قطاعي", required: false },
       { key: "quantity", label: "الكمية", required: false },
       { key: "unit", label: "الوحدة", required: false },
+    ],
+    suppliers: [
+      { key: "name", label: "اسم المورد ⭐", required: true },
+      { key: "email", label: "البريد الإلكتروني", required: false },
+      { key: "phone", label: "رقم الهاتف", required: false },
+      { key: "address", label: "العنوان", required: false },
+    ],
+    treasury: [
+      { key: "amount", label: "المبلغ ⭐", required: true },
+      { key: "description", label: "البيان", required: false },
+      { key: "date", label: "التاريخ", required: false },
+    ],
+    debts: [
+      { key: "client_name", label: "اسم العميل ⭐", required: true },
+      { key: "amount", label: "المبلغ ⭐", required: true },
+      { key: "description", label: "البيان", required: false },
+      { key: "due_date", label: "تاريخ الاستحقاق", required: false },
+    ],
+    salaries: [
+      { key: "name", label: "اسم الموظف ⭐", required: true },
+      { key: "phone", label: "رقم الهاتف", required: false },
+      { key: "salary", label: "الراتب", required: false },
+      { key: "notes", label: "ملاحظات", required: false },
+    ],
+    bank: [
+      { key: "bank_name", label: "اسم البنك ⭐", required: true },
+      { key: "account_name", label: "اسم الحساب ⭐", required: true },
+      { key: "account_number", label: "رقم الحساب", required: false },
+      { key: "iban", label: "IBAN", required: false },
+      { key: "swift", label: "SWIFT", required: false },
+      { key: "currency", label: "العملة", required: false },
+      { key: "balance", label: "الرصيد الافتتاحي", required: false },
     ],
   };
 
@@ -123,6 +163,55 @@ const ImportExcel = () => {
           };
           if (!body.name) continue;
           endpoint = `${API}/api/inventory`;
+        } else if (destination === "suppliers") {
+          body = {
+            name: mapping.name ? String(row[mapping.name] || "") : "",
+            email: mapping.email ? String(row[mapping.email] || "") : "",
+            phone: mapping.phone ? String(row[mapping.phone] || "") : "",
+            address: mapping.address ? String(row[mapping.address] || "") : "",
+          };
+          if (!body.name) continue;
+          endpoint = `${API}/api/suppliers`;
+        } else if (destination === "treasury") {
+          body = {
+            type: defaultTreasuryType,
+            source: defaultTreasurySource,
+            amount: Number(row[mapping.amount] || 0),
+            description: mapping.description ? String(row[mapping.description] || "") : "",
+            date: mapping.date ? String(row[mapping.date] || new Date().toISOString().split("T")[0]) : new Date().toISOString().split("T")[0],
+          };
+          if (body.amount <= 0) continue;
+          endpoint = `${API}/api/treasury`;
+        } else if (destination === "debts") {
+          body = {
+            client_name: mapping.client_name ? String(row[mapping.client_name] || "") : "",
+            amount: Number(row[mapping.amount] || 0),
+            description: mapping.description ? String(row[mapping.description] || "") : "",
+            due_date: mapping.due_date ? String(row[mapping.due_date] || "") : "",
+          };
+          if (!body.client_name || body.amount <= 0) continue;
+          endpoint = `${API}/api/debts`;
+        } else if (destination === "salaries") {
+          body = {
+            name: mapping.name ? String(row[mapping.name] || "") : "",
+            phone: mapping.phone ? String(row[mapping.phone] || "") : "",
+            salary: mapping.salary ? Number(row[mapping.salary] || 0) : 0,
+            notes: mapping.notes ? String(row[mapping.notes] || "") : "",
+          };
+          if (!body.name) continue;
+          endpoint = `${API}/api/salaries/employees`;
+        } else if (destination === "bank") {
+          body = {
+            bank_name: mapping.bank_name ? String(row[mapping.bank_name] || "") : "",
+            account_name: mapping.account_name ? String(row[mapping.account_name] || "") : "",
+            account_number: mapping.account_number ? String(row[mapping.account_number] || "") : "",
+            iban: mapping.iban ? String(row[mapping.iban] || "") : "",
+            swift: mapping.swift ? String(row[mapping.swift] || "") : "",
+            currency: mapping.currency ? String(row[mapping.currency] || "EGP") : "EGP",
+            balance: mapping.balance ? Number(row[mapping.balance] || 0) : 0,
+          };
+          if (!body.bank_name || !body.account_name) continue;
+          endpoint = `${API}/api/bank`;
         }
 
         await axios.post(endpoint, body, { headers });
@@ -282,6 +371,30 @@ const ImportExcel = () => {
                     <option value="مصروف">مصروف</option>
                   </select>
                 </div>
+              )}
+
+              {destination === "treasury" && (
+                <>
+                  <div>
+                    <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>نوع الحركة الافتراضي</label>
+                    <select value={defaultTreasuryType} onChange={(e) => setDefaultTreasuryType(e.target.value)}
+                      style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                      className="w-full border rounded-lg px-4 py-3 text-sm">
+                      <option value="deposit">إيداع</option>
+                      <option value="withdraw">سحب</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>المصدر الافتراضي</label>
+                    <select value={defaultTreasurySource} onChange={(e) => setDefaultTreasurySource(e.target.value)}
+                      style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                      className="w-full border rounded-lg px-4 py-3 text-sm">
+                      <option value="cash">نقدي</option>
+                      <option value="vodafone_cash">فودافون كاش</option>
+                      <option value="instapay">انستا باي</option>
+                    </select>
+                  </div>
+                </>
               )}
             </div>
 

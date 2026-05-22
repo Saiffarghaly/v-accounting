@@ -2,11 +2,6 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 
-interface Client {
-  id: number;
-  name: string;
-}
-
 interface Debt {
   id: number;
   client_id: number;
@@ -30,13 +25,12 @@ const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.
 const Debts = () => {
   const { token } = useAuth();
   const [tab, setTab] = useState<"register" | "track" | "overdue">("register");
-  const [clients, setClients] = useState<Client[]>([]);
   const [debts, setDebts] = useState<Debt[]>([]);
   const [overdue, setOverdue] = useState<Debt[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Register form
-  const [form, setForm] = useState({ client_id: "", amount: "", description: "", due_date: "" });
+  const [form, setForm] = useState({ client_name: "", amount: "", description: "", due_date: "" });
 
   // Track
   const [selectedDebt, setSelectedDebt] = useState<Debt | null>(null);
@@ -44,13 +38,6 @@ const Debts = () => {
   const [payForm, setPayForm] = useState({ amount: "", date: new Date().toISOString().split("T")[0], notes: "" });
 
   const headers = { Authorization: `Bearer ${token}` };
-
-  const fetchClients = async () => {
-    try {
-      const res = await axios.get(`${API}/api/clients`, { headers });
-      setClients(res.data);
-    } catch (err) { console.error(err); }
-  };
 
   const fetchDebts = async () => {
     try {
@@ -73,14 +60,14 @@ const Debts = () => {
     } catch (err) { console.error(err); }
   };
 
-  useEffect(() => { fetchClients(); fetchDebts(); }, []);
+  useEffect(() => { fetchDebts(); }, []);
 
   const handleRegister = async () => {
-    if (!form.client_id || !form.amount) return;
+    if (!form.client_name || !form.amount) return;
     setLoading(true);
     try {
       await axios.post(`${API}/api/debts`, form, { headers });
-      setForm({ client_id: "", amount: "", description: "", due_date: "" });
+      setForm({ client_name: "", amount: "", description: "", due_date: "" });
       fetchDebts();
       fetchOverdue();
     } catch (err) { console.error(err); }
@@ -137,13 +124,11 @@ const Debts = () => {
           <div className="rounded-xl p-6 border space-y-4" style={{ background: "#ffffff", borderColor: "#e0e0e0" }}>
             <h4 className="font-semibold" style={{ color: "#1a1a1a" }}>تسجيل دين على عميل</h4>
             <div>
-              <label className="text-sm mb-1 block" style={{ color: "#555" }}>العميل *</label>
-              <select value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })}
+              <label className="text-sm mb-1 block" style={{ color: "#555" }}>اسم الشخص/العميل *</label>
+              <input type="text" value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })}
+                placeholder="اكتب اسم الشخص أو العميل"
                 className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none"
-                style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }}>
-                <option value="">اختر العميل</option>
-                {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+                style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -165,9 +150,9 @@ const Debts = () => {
                 placeholder="سبب الدين" className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none"
                 style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }} />
             </div>
-            <button onClick={handleRegister} disabled={loading || !form.client_id || !form.amount}
+            <button onClick={handleRegister} disabled={loading || !form.client_name || !form.amount}
               className="text-white text-sm px-6 py-2.5 rounded-lg transition w-full"
-              style={{ background: loading || !form.client_id || !form.amount ? "#81c784" : "#217346" }}>
+              style={{ background: loading || !form.client_name || !form.amount ? "#81c784" : "#217346" }}>
               {loading ? "جاري الحفظ..." : "تسجيل الدين"}
             </button>
           </div>

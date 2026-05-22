@@ -44,6 +44,11 @@ interface Stats {
   cashFlow: { income: number; expenses: number; net: number };
   healthScore: number;
   topCategories: { category: string; total: number }[];
+  inventory: { total: number; lowStock: number };
+  suppliers: { total: number; balance: number };
+  employees: { total: number; totalSalaries: number };
+  treasury: { balance: number };
+  bank: { totalAccounts: number; totalBalance: number };
 }
 
 const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
@@ -150,8 +155,7 @@ const Dashboard = () => {
 
   const navItems = [
     { id: "dashboard", label: "الرئيسية", icon: "📊" },
-    { id: "income", label: "الإيرادات", icon: "💰" },
-    { id: "expenses", label: "المصروفات", icon: "💸" },
+    { id: "income", label: "الحركات", icon: "💰" },
     { id: "invoices", label: "الفواتير", icon: "🧾" },
     { id: "import", label: "استيراد Excel", icon: "📁" },
     { id: "clients", label: "العملاء", icon: "👥" },
@@ -226,8 +230,7 @@ const Dashboard = () => {
             {isDashboard && <BrandWordmark variant="onLight" size="sm" />}
             <h2 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>
               {activePage === "dashboard" && "لوحة التحكم"}
-              {activePage === "income" && "الإيرادات"}
-              {activePage === "expenses" && "المصروفات"}
+              {activePage === "income" && "الحركات"}
               {activePage === "invoices" && "الفواتير"}
               {activePage === "clients" && "العملاء"}
               {activePage === "reports" && "التقارير"}
@@ -330,6 +333,29 @@ const Dashboard = () => {
               )}
             </div>
 
+            {/* --- Secondary Stats Row --- */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)
+              ) : (
+                <>
+                  <StatCard label="المخزن" value={stats ? `${stats.inventory.total} صنف` : "—"}
+                    sub={stats?.inventory.lowStock ? `${stats.inventory.lowStock} ناقص` : "مكتمل"}
+                    color={stats?.inventory.lowStock && stats.inventory.lowStock > 0 ? "var(--color-warning)" : "var(--color-success)"} />
+                  <StatCard label="الموظفين" value={stats ? `${stats.employees.total} موظف` : "—"}
+                    sub={stats ? `رواتب ${stats.employees.totalSalaries.toLocaleString()} ج` : undefined}
+                    color="var(--color-info)" />
+                  <StatCard label="الموردين" value={stats ? `${stats.suppliers.total} مورد` : "—"}
+                    sub={stats ? `مستحق ${stats.suppliers.balance.toLocaleString()} ج` : undefined}
+                    color={stats?.suppliers.balance && stats.suppliers.balance > 0 ? "var(--color-danger)" : "var(--color-success)"} />
+                  <StatCard label="الخزنة" value={stats ? `${stats.treasury.balance.toLocaleString()} ج` : "—"} color="var(--color-success)" />
+                  <StatCard label="البنوك" value={stats ? `${stats.bank.totalAccounts} حساب` : "—"}
+                    sub={stats ? `رصيد ${stats.bank.totalBalance.toLocaleString()} ج` : undefined}
+                    color="var(--color-info)" />
+                </>
+              )}
+            </div>
+
             {/* --- Charts + Insights Row --- */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
@@ -423,6 +449,39 @@ const Dashboard = () => {
                       </div>
                       <span className="text-2xl">{stats?.overdueDebts && stats.overdueDebts > 0 ? "⚠️" : "🎯"}</span>
                     </div>
+
+                    {/* Low Stock Alert */}
+                    <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: (stats?.inventory.lowStock || 0) > 0 ? "var(--color-danger-light)" : "var(--color-success-light)" }}>
+                      <div>
+                        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>المخزون المنخفض</p>
+                        <p className="text-lg font-bold" style={{ color: (stats?.inventory.lowStock || 0) > 0 ? "var(--color-danger)" : "var(--color-success)" }}>
+                          {stats?.inventory.lowStock || 0} صنف
+                        </p>
+                      </div>
+                      <span className="text-2xl">{stats?.inventory.lowStock && stats.inventory.lowStock > 0 ? "📦" : "✅"}</span>
+                    </div>
+
+                    {/* Pending Invoices */}
+                    <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: (stats?.pendingInvoices || 0) > 0 ? "var(--color-warning-light)" : "var(--color-success-light)" }}>
+                      <div>
+                        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>الفواتير المعلقة</p>
+                        <p className="text-lg font-bold" style={{ color: (stats?.pendingInvoices || 0) > 0 ? "var(--color-warning)" : "var(--color-success)" }}>
+                          {stats?.pendingInvoices || 0} فاتورة
+                        </p>
+                      </div>
+                      <span className="text-2xl">{stats?.pendingInvoices && stats.pendingInvoices > 0 ? "🧾" : "✅"}</span>
+                    </div>
+
+                    {/* Supplier Balance */}
+                    <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: (stats?.suppliers.balance || 0) > 0 ? "var(--color-danger-light)" : "var(--color-success-light)" }}>
+                      <div>
+                        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>مستحقات الموردين</p>
+                        <p className="text-lg font-bold" style={{ color: (stats?.suppliers.balance || 0) > 0 ? "var(--color-danger)" : "var(--color-success)" }}>
+                          {stats?.suppliers.balance ? `${stats.suppliers.balance.toLocaleString()} ج` : "0 ج"}
+                        </p>
+                      </div>
+                      <span className="text-2xl">{stats?.suppliers.balance && stats.suppliers.balance > 0 ? "🚚" : "✅"}</span>
+                    </div>
                   </>
                 )}
               </div>
@@ -473,12 +532,31 @@ const Dashboard = () => {
                 <EmptyState text="لا توجد معاملات مالية بعد. ابدأ بإضافة أول عملية!" />
               )}
             </div>
+
+            {/* --- Module Overview Grid --- */}
+            {!loading && stats && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {[
+                  { label: "العملاء", value: stats.clients, icon: "👥", color: "var(--color-info)" },
+                  { label: "أصناف المخزن", value: stats.inventory.total, icon: "📦", color: "var(--color-success)" },
+                  { label: "الفواتير", value: stats.totalInvoices, icon: "🧾", color: "var(--color-warning)" },
+                  { label: "الموردين", value: stats.suppliers.total, icon: "🚚", color: "var(--color-danger)" },
+                  { label: "الموظفين", value: stats.employees.total, icon: "👨‍💼", color: "var(--color-info)" },
+                  { label: "حسابات بنكية", value: stats.bank.totalAccounts, icon: "🏦", color: "var(--color-success)" },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-lg p-4 text-center border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)" }}>
+                    <p className="text-xl mb-1">{item.icon}</p>
+                    <p className="text-lg font-bold" style={{ color: item.color }}>{item.value}</p>
+                    <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>{item.label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* ===== Pages ===== */}
         {activePage === "income" && <Transactions />}
-        {activePage === "expenses" && <Transactions />}
         {activePage === "clients" && <Clients />}
         {activePage === "invoices" && <Invoices />}
         {activePage === "import" && <ImportExcel />}
@@ -491,7 +569,7 @@ const Dashboard = () => {
         {activePage === "reports" && <Reports />}
         {activePage === "bank" && <BankSync />}
 
-        {!["dashboard","income","expenses","clients","invoices","import","treasury","users","inventory","suppliers","salaries","debts","reports","bank"].includes(activePage) && (
+        {!["dashboard","income","clients","invoices","import","treasury","users","inventory","suppliers","salaries","debts","reports","bank"].includes(activePage) && (
           <div className="flex items-center justify-center h-full" style={{ color: "var(--color-text-muted)" }}>
             <div className="text-center">
               <p className="text-4xl mb-3">🚧</p>

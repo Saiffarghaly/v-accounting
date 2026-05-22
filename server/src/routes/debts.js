@@ -19,7 +19,7 @@ const auth = (req, res, next) => {
 router.get('/', auth, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT cd.*, c.name as client_name FROM client_debts cd JOIN clients c ON cd.client_id = c.id WHERE cd.office_id = $1 ORDER BY cd.created_at DESC',
+      `SELECT cd.*, COALESCE(cd.client_name, c.name) as client_name FROM client_debts cd LEFT JOIN clients c ON cd.client_id = c.id WHERE cd.office_id = $1 ORDER BY cd.created_at DESC`,
       [req.officeId]
     );
     res.json(result.rows);
@@ -30,12 +30,12 @@ router.get('/', auth, async (req, res) => {
 
 // Create debt
 router.post('/', auth, async (req, res) => {
-  const { client_id, amount, description, due_date } = req.body;
-  if (!client_id || !amount) return res.status(400).json({ error: 'client_id and amount required' });
+  const { client_id, client_name, amount, description, due_date } = req.body;
+  if ((!client_id && !client_name) || !amount) return res.status(400).json({ error: 'client_id or client_name, and amount required' });
   try {
     const result = await pool.query(
-      'INSERT INTO client_debts (office_id, client_id, amount, remaining, description, due_date) VALUES ($1,$2,$3,$3,$4,$5) RETURNING *',
-      [req.officeId, client_id, amount, description, due_date]
+      'INSERT INTO client_debts (office_id, client_id, client_name, amount, remaining, description, due_date) VALUES ($1,$2,$3,$4,$4,$5,$6) RETURNING *',
+      [req.officeId, client_id || null, client_name || null, amount, description, due_date]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -83,7 +83,7 @@ router.post('/:id/payments', auth, async (req, res) => {
 router.get('/overdue', auth, async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT cd.*, c.name as client_name FROM client_debts cd JOIN clients c ON cd.client_id = c.id WHERE cd.office_id = $1 AND cd.status = 'active' AND cd.due_date < CURRENT_DATE AND cd.remaining > 0 ORDER BY cd.due_date ASC",
+      `SELECT cd.*, COALESCE(cd.client_name, c.name) as client_name FROM client_debts cd LEFT JOIN clients c ON cd.client_id = c.id WHERE cd.office_id = $1 AND cd.status = 'active' AND cd.due_date < CURRENT_DATE AND cd.remaining > 0 ORDER BY cd.due_date ASC`,
       [req.officeId]
     );
     res.json(result.rows);

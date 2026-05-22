@@ -76,20 +76,48 @@ router.get('/payments', auth, async (req, res) => {
   }
 });
 
-// Record salary payment
+// Record salary payment (with optional loan deductions)
 router.post('/payments', auth, async (req, res) => {
-  const { employee_id, amount, month, date, notes } = req.body;
+  const { employee_id, amount, month, date, notes, loan_deductions } = req.body;
   if (!employee_id || !amount || !month) {
     return res.status(400).json({ error: 'employee_id, amount, and month are required' });
   }
+  const client = await pool.connect();
   try {
-    const result = await pool.query(
+    await client.query('BEGIN');
+
+    const payResult = await client.query(
       'INSERT INTO employee_payments (office_id, created_by_user_id, employee_id, amount, month, date, notes) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *',
       [req.officeId, req.userId, employee_id, amount, month, date || new Date().toISOString().split('T')[0], notes]
     );
-    res.status(201).json(result.rows[0]);
+    const payment = payResult.rows[0];
+
+    if (loan_deductions && loan_deductions.length > 0) {
+      for (const d of loan_deductions) {
+        await client.query(
+          'INSERT INTO employee_loan_payments (office_id, loan_id, employee_payment_id, amount) VALUES ($1,$2,$3,$4)',
+          [req.officeId, d.loan_id, payment.id, d.amount]
+        );
+        const updated = await client.query(
+          'UPDATE employee_loans SET remaining = remaining - $1 WHERE id = $2 AND office_id = $3 RETURNING remaining',
+          [d.amount, d.loan_id, req.officeId]
+        );
+        if (updated.rows.length > 0 && Number(updated.rows[0].remaining) <= 0) {
+          await client.query(
+            "UPDATE employee_loans SET remaining = 0, status = 'paid' WHERE id = $1",
+            [d.loan_id]
+          );
+        }
+      }
+    }
+
+    await client.query('COMMIT');
+    res.status(201).json(payment);
   } catch (err) {
+    await client.query('ROLLBACK');
     res.status(500).json({ error: 'Server error' });
+  } finally {
+    client.release();
   }
 });
 

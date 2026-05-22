@@ -19,11 +19,19 @@ interface Transaction {
   date: string;
 }
 
+interface InventoryItem {
+  id: number;
+  name: string;
+  category: string;
+  quantity: number;
+  unit: string;
+}
+
 const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
 
 const Suppliers = () => {
   const { token } = useAuth();
-  const [tab, setTab] = useState<"add" | "purchase" | "debts">("add");
+  const [tab, setTab] = useState<"add" | "purchase" | "debts" | "my_debts" | "items">("add");
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -40,6 +48,16 @@ const Suppliers = () => {
   // Debts
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [supplierTransactions, setSupplierTransactions] = useState<Transaction[]>([]);
+
+  // My debts to suppliers
+  const [myDebts, setMyDebts] = useState<any[]>([]);
+  const [debtForm, setDebtForm] = useState({ supplier_id: "", amount: "", description: "", due_date: "" });
+
+  // Supplier items
+  const [supplierItems, setSupplierItems] = useState<InventoryItem[]>([]);
+  const [allItems, setAllItems] = useState<InventoryItem[]>([]);
+  const [selectedItemSupplier, setSelectedItemSupplier] = useState<Supplier | null>(null);
+  const [assignItemId, setAssignItemId] = useState("");
 
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -69,6 +87,33 @@ const Suppliers = () => {
       const res = await axios.get(`${API}/api/suppliers/${supplierId}/transactions`, { headers });
       setSupplierTransactions(res.data);
     } catch (err) { console.error(err); }
+  };
+
+  const fetchSupplierItems = async (supplierId: number) => {
+    try {
+      const res = await axios.get(`${API}/api/inventory`, { headers });
+      const items = res.data.filter((i: any) => i.supplier_id === supplierId);
+      setSupplierItems(items);
+    } catch (err) { console.error(err); }
+  };
+
+  const fetchAllItems = async () => {
+    try {
+      const res = await axios.get(`${API}/api/inventory`, { headers });
+      setAllItems(res.data.filter((i: any) => !i.supplier_id));
+    } catch (err) { console.error(err); }
+  };
+
+  const handleAssignItem = async () => {
+    if (!selectedItemSupplier || !assignItemId) return;
+    setLoading(true);
+    try {
+      await axios.patch(`${API}/api/inventory/${assignItemId}/supplier`, { supplier_id: selectedItemSupplier.id }, { headers });
+      setAssignItemId("");
+      fetchSupplierItems(selectedItemSupplier.id);
+      fetchAllItems();
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => { fetchSuppliers(); }, []);
@@ -101,12 +146,30 @@ const Suppliers = () => {
     finally { setLoading(false); }
   };
 
+  const fetchMyDebts = async () => {
+    try { const res = await axios.get(`${API}/api/supplier-debts`, { headers }); setMyDebts(res.data); }
+    catch (err) { console.error(err); }
+  };
+
+  const handleAddDebt = async () => {
+    if (!debtForm.supplier_id || !debtForm.amount) return;
+    setLoading(true);
+    try {
+      await axios.post(`${API}/api/supplier-debts`, debtForm, { headers });
+      setDebtForm({ supplier_id: "", amount: "", description: "", due_date: "" });
+      fetchMyDebts();
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
+  };
+
   const totalDebt = suppliers.reduce((s, sup) => s + Number(sup.balance), 0);
 
   const tabs = [
     { id: "add" as const, label: "إضافة مورد", icon: "➕" },
     { id: "purchase" as const, label: "تسجيل مشتريات", icon: "🛒" },
-    { id: "debts" as const, label: "مديونيات للموردين", icon: "📋" },
+    { id: "debts" as const, label: "مديونيات علي الموردين", icon: "📋" },
+    { id: "my_debts" as const, label: "مديونيات للموردين", icon: "💳" },
+    { id: "items" as const, label: "أصناف المورد", icon: "📦" },
   ];
 
   return (
@@ -258,7 +321,149 @@ const Suppliers = () => {
         </div>
       )}
 
-      {/* Tab: مديونيات للموردين */}
+      {/* Tab: مديونيات للموردين (جديد) */}
+      {tab === "my_debts" && (
+        <div className="grid grid-cols-2 gap-6">
+          <div className="rounded-xl p-6 border space-y-4" style={{ background: "#ffffff", borderColor: "#e0e0e0" }}>
+            <h4 className="font-semibold" style={{ color: "#1a1a1a" }}>تسجيل دين جديد للمورد</h4>
+            <div>
+              <label className="text-sm mb-1 block" style={{ color: "#555" }}>المورد *</label>
+              <select value={debtForm.supplier_id} onChange={(e) => setDebtForm({ ...debtForm, supplier_id: e.target.value })}
+                className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none"
+                style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }}>
+                <option value="">اختر المورد</option>
+                {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm mb-1 block" style={{ color: "#555" }}>المبلغ *</label>
+                <input type="number" value={debtForm.amount} onChange={(e) => setDebtForm({ ...debtForm, amount: e.target.value })}
+                  placeholder="0" className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none"
+                  style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }} />
+              </div>
+              <div>
+                <label className="text-sm mb-1 block" style={{ color: "#555" }}>تاريخ الاستحقاق</label>
+                <input type="date" value={debtForm.due_date} onChange={(e) => setDebtForm({ ...debtForm, due_date: e.target.value })}
+                  className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none"
+                  style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }} />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm mb-1 block" style={{ color: "#555" }}>البيان</label>
+              <input type="text" value={debtForm.description} onChange={(e) => setDebtForm({ ...debtForm, description: e.target.value })}
+                placeholder="سبب الدين" className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none"
+                style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }} />
+            </div>
+            <button onClick={handleAddDebt} disabled={loading || !debtForm.supplier_id || !debtForm.amount}
+              className="text-white text-sm px-6 py-2.5 rounded-lg transition w-full"
+              style={{ background: loading || !debtForm.supplier_id || !debtForm.amount ? "#81c784" : "#217346" }}>
+              {loading ? "جاري الحفظ..." : "تسجيل الدين"}
+            </button>
+          </div>
+          <div className="rounded-xl p-6 border" style={{ background: "#ffffff", borderColor: "#e0e0e0" }}>
+            <h4 className="font-semibold mb-4" style={{ color: "#1a1a1a" }}>سجل الديون للموردين</h4>
+            {myDebts.length === 0 ? (
+              <p className="text-center py-8 text-sm" style={{ color: "#bbb" }}>لا توجد ديون مسجلة</p>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-auto">
+                {myDebts.map((d: any) => (
+                  <div key={d.id} className="flex items-center justify-between p-3 rounded-lg" style={{ background: "#f9f9f9" }}>
+                    <div>
+                      <p className="text-sm font-medium" style={{ color: "#333" }}>{d.supplier_name}</p>
+                      <p className="text-xs" style={{ color: "#888" }}>{d.description || "—"} · {d.due_date ? new Date(d.due_date).toLocaleDateString('ar-EG') : "بدون تاريخ"}</p>
+                    </div>
+                    <span className="text-sm font-bold" style={{ color: "#c62828" }}>
+                      {Number(d.amount).toLocaleString()} ج
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab: أصناف المورد */}
+      {tab === "items" && (
+        <div className="grid grid-cols-2 gap-6">
+          <div className="rounded-xl p-6 border" style={{ background: "#ffffff", borderColor: "#e0e0e0" }}>
+            <h4 className="font-semibold mb-4" style={{ color: "#1a1a1a" }}>الموردين</h4>
+            {suppliers.length === 0 ? (
+              <p className="text-center py-8 text-sm" style={{ color: "#bbb" }}>لا يوجد موردين</p>
+            ) : (
+              <div className="space-y-2 max-h-96 overflow-auto">
+                {suppliers.map(s => (
+                  <div key={s.id} onClick={() => { setSelectedItemSupplier(s); fetchSupplierItems(s.id); fetchAllItems(); }}
+                    className="flex items-center justify-between p-3 rounded-lg cursor-pointer transition"
+                    style={{
+                      background: selectedItemSupplier?.id === s.id ? "#e8f5e9" : "#f9f9f9",
+                      border: selectedItemSupplier?.id === s.id ? "1px solid #217346" : "1px solid transparent"
+                    }}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ background: "#217346" }}>
+                        {s.name.charAt(0)}
+                      </div>
+                      <p className="text-sm font-medium" style={{ color: "#333" }}>{s.name}</p>
+                    </div>
+                    <span className="text-xs" style={{ color: "#888" }}>{s.phone || "—"}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {selectedItemSupplier ? (
+            <div className="rounded-xl p-6 border space-y-4" style={{ background: "#ffffff", borderColor: "#e0e0e0" }}>
+              <h4 className="font-semibold" style={{ color: "#1a1a1a" }}>أصناف {selectedItemSupplier.name}</h4>
+
+              {/* Assign item */}
+              <div className="flex gap-3 items-end">
+                <div className="flex-1">
+                  <label className="text-sm mb-1 block" style={{ color: "#555" }}>إضافة صنف موجود</label>
+                  <select value={assignItemId} onChange={(e) => setAssignItemId(e.target.value)}
+                    className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none"
+                    style={{ background: "#f9f9f9", border: "1px solid #ddd", color: "#333" }}>
+                    <option value="">اختر صنف</option>
+                    {allItems.map(i => <option key={i.id} value={i.id}>{i.name} ({i.quantity} {i.unit})</option>)}
+                  </select>
+                </div>
+                <button onClick={handleAssignItem} disabled={loading || !assignItemId}
+                  className="text-white text-sm px-4 py-3 rounded-lg transition"
+                  style={{ background: loading || !assignItemId ? "#81c784" : "#217346" }}>
+                  إضافة
+                </button>
+              </div>
+
+              {/* Items list */}
+              {supplierItems.length === 0 ? (
+                <p className="text-center py-8 text-sm" style={{ color: "#bbb" }}>لا توجد أصناف مرتبطة بهذا المورد</p>
+              ) : (
+                <div className="space-y-2 max-h-80 overflow-auto">
+                  {supplierItems.map(i => (
+                    <div key={i.id} className="flex items-center justify-between p-3 rounded-lg" style={{ background: "#f9f9f9" }}>
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: "#333" }}>{i.name}</p>
+                        <p className="text-xs" style={{ color: "#888" }}>{i.category || "—"}</p>
+                      </div>
+                      <span className="text-sm font-bold" style={{ color: "#217346" }}>
+                        {i.quantity} {i.unit}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-xl p-6 border flex items-center justify-center"
+              style={{ background: "#fafafa", borderColor: "#e0e0e0", minHeight: "300px" }}>
+              <p className="text-sm" style={{ color: "#bbb" }}>اختر مورد لعرض أصنافه</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab: مديونيات علي الموردين */}
       {tab === "debts" && (
         <div className="space-y-6">
           {/* Stats */}

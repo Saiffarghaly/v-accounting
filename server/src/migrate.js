@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS supplier_transactions (
         office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
         created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
         client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+        client_name VARCHAR(255),
         amount DECIMAL(12,2) NOT NULL,
         status VARCHAR(20) DEFAULT 'pending',
         due_date DATE,
@@ -142,6 +143,7 @@ CREATE TABLE IF NOT EXISTS client_debts (
   id SERIAL PRIMARY KEY,
   office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
   client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
+  client_name VARCHAR(255),
   amount DECIMAL(12,2) NOT NULL,
   remaining DECIMAL(12,2) NOT NULL,
   description TEXT,
@@ -205,6 +207,57 @@ CREATE TABLE IF NOT EXISTS bank_transactions (
   description TEXT,
   date DATE DEFAULT CURRENT_DATE,
   reference VARCHAR(100),
+  created_at TIMESTAMP DEFAULT NOW()
+      );
+
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS client_name VARCHAR(255);
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS type VARCHAR(20) DEFAULT 'simple';
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS notes TEXT;
+
+CREATE TABLE IF NOT EXISTS invoice_items (
+  id SERIAL PRIMARY KEY,
+  office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  invoice_id INTEGER REFERENCES invoices(id) ON DELETE CASCADE,
+  item_id INTEGER REFERENCES inventory(id) ON DELETE SET NULL,
+  item_name VARCHAR(255) NOT NULL,
+  quantity INTEGER NOT NULL DEFAULT 1,
+  unit_price DECIMAL(12,2) NOT NULL,
+  total_price DECIMAL(12,2) NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+ALTER TABLE client_debts ADD COLUMN IF NOT EXISTS client_name VARCHAR(255);
+ALTER TABLE inventory ADD COLUMN IF NOT EXISTS supplier_id INTEGER REFERENCES suppliers(id) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS employee_loans (
+  id SERIAL PRIMARY KEY,
+  office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  employee_id INTEGER REFERENCES employees(id) ON DELETE CASCADE,
+  amount DECIMAL(12,2) NOT NULL,
+  remaining DECIMAL(12,2) NOT NULL,
+  description TEXT,
+  date DATE DEFAULT CURRENT_DATE,
+  status VARCHAR(20) DEFAULT 'active',
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS employee_loan_payments (
+  id SERIAL PRIMARY KEY,
+  office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  loan_id INTEGER REFERENCES employee_loans(id) ON DELETE CASCADE,
+  employee_payment_id INTEGER REFERENCES employee_payments(id) ON DELETE SET NULL,
+  amount DECIMAL(12,2) NOT NULL,
+  date DATE DEFAULT CURRENT_DATE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS supplier_debts (
+  id SERIAL PRIMARY KEY,
+  office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  supplier_id INTEGER REFERENCES suppliers(id) ON DELETE CASCADE,
+  amount DECIMAL(12,2) NOT NULL,
+  description TEXT,
+  due_date DATE,
+  status VARCHAR(20) DEFAULT 'active',
   created_at TIMESTAMP DEFAULT NOW()
 );
     `);

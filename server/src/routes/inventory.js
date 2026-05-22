@@ -30,10 +30,11 @@ router.get('/', auth, async (req, res) => {
     await ensureAuditColumns();
 
     const result = await pool.query(
-      `SELECT i.*, COALESCE(u.name, o.name) as created_by_name
+      `SELECT i.*, COALESCE(u.name, o.name) as created_by_name, s.name as supplier_name
        FROM inventory i
        LEFT JOIN users u ON i.created_by_user_id = u.id
        LEFT JOIN offices o ON i.office_id = o.id
+       LEFT JOIN suppliers s ON i.supplier_id = s.id
        WHERE i.office_id = $1
        ORDER BY i.created_at DESC`,
       [req.officeId]
@@ -46,13 +47,13 @@ router.get('/', auth, async (req, res) => {
 
 // Add item
 router.post('/', auth, async (req, res) => {
-  const { name, category, buy_price, sell_wholesale, sell_retail, quantity, min_quantity, unit } = req.body;
+  const { name, category, buy_price, sell_wholesale, sell_retail, quantity, min_quantity, unit, supplier_id } = req.body;
   try {
     await ensureAuditColumns();
 
     const result = await pool.query(
-      'INSERT INTO inventory (office_id, created_by_user_id, name, category, buy_price, sell_wholesale, sell_retail, quantity, min_quantity, unit) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *',
-      [req.officeId, req.userId, name, category, buy_price, sell_wholesale, sell_retail, quantity, min_quantity, unit]
+      'INSERT INTO inventory (office_id, created_by_user_id, name, category, buy_price, sell_wholesale, sell_retail, quantity, min_quantity, unit, supplier_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *',
+      [req.officeId, req.userId, name, category, buy_price, sell_wholesale, sell_retail, quantity, min_quantity, unit, supplier_id || null]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -67,6 +68,20 @@ router.put('/:id', auth, async (req, res) => {
     const result = await pool.query(
       'UPDATE inventory SET name=$1, category=$2, buy_price=$3, sell_wholesale=$4, sell_retail=$5, quantity=$6, min_quantity=$7, unit=$8 WHERE id=$9 AND office_id=$10 RETURNING *',
       [name, category, buy_price, sell_wholesale, sell_retail, quantity, min_quantity, unit, req.params.id, req.officeId]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Link item to supplier
+router.patch('/:id/supplier', auth, async (req, res) => {
+  const { supplier_id } = req.body;
+  try {
+    const result = await pool.query(
+      'UPDATE inventory SET supplier_id = $1 WHERE id = $2 AND office_id = $3 RETURNING *',
+      [supplier_id || null, req.params.id, req.officeId]
     );
     res.json(result.rows[0]);
   } catch (err) {

@@ -18,7 +18,7 @@ const auth = (req, res, next) => {
 router.get('/', auth, async (req, res) => {
   try {
     const dueInvoices = await pool.query(
-      "SELECT id, client_id, amount, due_date FROM invoices WHERE office_id = $1 AND status = 'pending' AND due_date IS NOT NULL AND due_date <= CURRENT_DATE + INTERVAL '3 days' ORDER BY due_date ASC",
+      "SELECT id, client_id, COALESCE(client_name, '') as client_name, amount, due_date FROM invoices WHERE office_id = $1 AND status = 'pending' AND due_date IS NOT NULL AND due_date <= CURRENT_DATE + INTERVAL '3 days' ORDER BY due_date ASC",
       [req.officeId]
     );
 
@@ -33,7 +33,7 @@ router.get('/', auth, async (req, res) => {
     );
 
     const overdueDebts = await pool.query(
-      "SELECT cd.id, c.name as client_name, cd.amount, cd.remaining, cd.due_date FROM client_debts cd JOIN clients c ON cd.client_id = c.id WHERE cd.office_id = $1 AND cd.status = 'active' AND cd.due_date < CURRENT_DATE AND cd.remaining > 0 ORDER BY cd.due_date ASC",
+      "SELECT cd.id, COALESCE(cd.client_name, c.name) as client_name, cd.amount, cd.remaining, cd.due_date FROM client_debts cd LEFT JOIN clients c ON cd.client_id = c.id WHERE cd.office_id = $1 AND cd.status = 'active' AND cd.due_date < CURRENT_DATE AND cd.remaining > 0 ORDER BY cd.due_date ASC",
       [req.officeId]
     );
 
