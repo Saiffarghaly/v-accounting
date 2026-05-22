@@ -295,27 +295,6 @@ const Inventory = () => {
                   { key: "quantity", label: "الكمية *", type: "number", placeholder: "0" },
                   { key: "min_quantity", label: "الحد الأدنى للتنبيه", type: "number", placeholder: "5" },
                 ].map((field) => (
-                  field.key === "unit" ? (
-                    <React.Fragment key={field.key}>
-                      <div>
-                        <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>{field.label}</label>
-                        <input type={field.type} value={form[field.key as keyof typeof form]}
-                          onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
-                          placeholder={field.placeholder}
-                          style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
-                          className="w-full border rounded-lg px-4 py-3 text-sm" />
-                      </div>
-                      <div>
-                        <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>المورد</label>
-                        <select value={form.supplier_id} onChange={(e) => setForm({ ...form, supplier_id: e.target.value })}
-                          style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
-                          className="w-full border rounded-lg px-4 py-3 text-sm">
-                          <option value="">اختر المورد</option>
-                          {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                        </select>
-                      </div>
-                    </React.Fragment>
-                  ) : (
                   <div key={field.key}>
                     <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>{field.label}</label>
                     <input type={field.type} value={form[field.key as keyof typeof form]}
@@ -325,6 +304,15 @@ const Inventory = () => {
                       className="w-full border rounded-lg px-4 py-3 text-sm" />
                   </div>
                 ))}
+                <div>
+                  <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>المورد</label>
+                  <select value={form.supplier_id} onChange={(e) => setForm({ ...form, supplier_id: e.target.value })}
+                    style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+                    className="w-full border rounded-lg px-4 py-3 text-sm">
+                    <option value="">اختر المورد</option>
+                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </div>
               </div>
               <div className="flex gap-3">
                 <button onClick={handleAdd} disabled={loading}
