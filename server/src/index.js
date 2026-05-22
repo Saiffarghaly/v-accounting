@@ -47,7 +47,7 @@ app.use('/api/employee-loans', employeeLoansRoutes);
 app.use('/api/executive-dashboard', executiveDashboardRoutes);
 
 // Serve built client static files (after API routes so /api/* takes priority)
-const clientDist = path.join(__dirname, '..', '..', 'client', 'dist');
+const clientDist = path.join(__dirname, '..', 'public');
 app.use(express.static(clientDist));
 
 // SPA catch-all: serve index.html for any non-API GET
