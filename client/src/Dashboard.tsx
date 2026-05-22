@@ -270,7 +270,7 @@ const Dashboard = () => {
                 )}
               </button>
               {showAlerts && (
-                <div className="absolute left-0 top-full mt-2 w-80 rounded-xl shadow-lg border z-50"
+                <div className="absolute right-0 top-full mt-2 w-80 rounded-xl shadow-lg border z-50"
                   style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)", boxShadow: "var(--shadow-dropdown)" }}>
                   <div className="p-3 border-b font-semibold text-sm" style={{ borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}>
                     الإشعارات
