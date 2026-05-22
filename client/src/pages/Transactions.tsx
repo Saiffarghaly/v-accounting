@@ -24,6 +24,7 @@ const Transactions = () => {
   const [showForm, setShowForm] = useState(false);
   const [listSearch, setListSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState<"all" | "إيراد" | "مصروف">("all");
   const [form, setForm] = useState({
     amount: "",
     type: "إيراد",
@@ -91,8 +92,9 @@ const Transactions = () => {
         return d;
       }
     };
-    return transactions.filter((t) =>
-      matchesListSearch(
+    return transactions.filter((t) => {
+      if (filter !== "all" && t.type !== filter) return false;
+      return matchesListSearch(
         listSearch,
         t.description,
         t.category,
@@ -100,9 +102,9 @@ const Transactions = () => {
         String(t.amount),
         dateStr(t.date),
         t.created_by_name
-      )
-    );
-  }, [transactions, listSearch]);
+      );
+    });
+  }, [transactions, listSearch, filter]);
 
   return (
     <div className="p-8 space-y-6">
@@ -122,6 +124,23 @@ const Transactions = () => {
             {(totalIncome - totalExpense).toLocaleString()} ج
           </p>
         </div>
+      </div>
+
+      <div className="flex gap-2" style={{ borderBottom: "1px solid var(--color-border)" }}>
+        {[
+          { id: "all", label: "الكل" },
+          { id: "إيراد", label: "إيرادات" },
+          { id: "مصروف", label: "مصروفات" },
+        ].map((t) => (
+          <button key={t.id} onClick={() => setFilter(t.id as any)}
+            className="px-4 py-2 text-sm font-medium border-b-2 transition"
+            style={{
+              borderColor: filter === t.id ? "var(--color-accent)" : "transparent",
+              color: filter === t.id ? "var(--color-accent)" : "var(--color-text-muted)",
+            }}>
+            {t.label}
+          </button>
+        ))}
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
