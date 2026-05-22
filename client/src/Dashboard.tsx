@@ -16,6 +16,7 @@ import Debts from "./pages/Debts";
 import Reports from "./pages/Reports";
 import BankSync from "./pages/BankSync";
 import AIAssistant from "./components/AIAssistant";
+import ExecutiveDashboard from "./pages/ExecutiveDashboard";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, AreaChart, Area, Legend
@@ -155,6 +156,7 @@ const Dashboard = () => {
 
   const navItems = [
     { id: "dashboard", label: "الرئيسية", icon: "📊" },
+    { id: "executive", label: "لوحة القيادة", icon: "📋" },
     { id: "income", label: "الحركات", icon: "💰" },
     { id: "invoices", label: "الفواتير", icon: "🧾" },
     { id: "import", label: "استيراد Excel", icon: "📁" },
@@ -242,6 +244,7 @@ const Dashboard = () => {
               {activePage === "salaries" && "الرواتب"}
               {activePage === "debts" && "الديون"}
               {activePage === "bank" && "البنوك"}
+              {activePage === "executive" && "لوحة القيادة التنفيذية"}
             </h2>
           </div>
           <div className="flex items-center gap-4">
@@ -568,8 +571,9 @@ const Dashboard = () => {
         {activePage === "debts" && <Debts />}
         {activePage === "reports" && <Reports />}
         {activePage === "bank" && <BankSync />}
+        {activePage === "executive" && <ExecutiveDashboard />}
 
-        {!["dashboard","income","clients","invoices","import","treasury","users","inventory","suppliers","salaries","debts","reports","bank"].includes(activePage) && (
+        {!["dashboard","income","clients","invoices","import","treasury","users","inventory","suppliers","salaries","debts","reports","bank","executive"].includes(activePage) && (
           <div className="flex items-center justify-center h-full" style={{ color: "var(--color-text-muted)" }}>
             <div className="text-center">
               <p className="text-4xl mb-3">🚧</p>
