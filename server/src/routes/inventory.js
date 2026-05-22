@@ -45,18 +45,45 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// Add item
+// Add item (optionally record expense + treasury withdrawal)
 router.post('/', auth, async (req, res) => {
-  const { name, category, buy_price, sell_wholesale, sell_retail, quantity, min_quantity, unit, supplier_id } = req.body;
+  const { name, category, buy_price, sell_wholesale, sell_retail, quantity, min_quantity, unit, supplier_id, record_expense } = req.body;
   try {
     await ensureAuditColumns();
 
-    const result = await pool.query(
-      'INSERT INTO inventory (office_id, created_by_user_id, name, category, buy_price, sell_wholesale, sell_retail, quantity, min_quantity, unit, supplier_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *',
-      [req.officeId, req.userId, name, category, buy_price, sell_wholesale, sell_retail, quantity, min_quantity, unit, supplier_id || null]
-    );
-    res.status(201).json(result.rows[0]);
+    const pgClient = await pool.connect();
+    try {
+      await pgClient.query('BEGIN');
+
+      const result = await pgClient.query(
+        'INSERT INTO inventory (office_id, created_by_user_id, name, category, buy_price, sell_wholesale, sell_retail, quantity, min_quantity, unit, supplier_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *',
+        [req.officeId, req.userId, name, category, buy_price, sell_wholesale, sell_retail, quantity, min_quantity, unit, supplier_id || null]
+      );
+      const item = result.rows[0];
+
+      if (record_expense && Number(buy_price) > 0 && Number(quantity) > 0) {
+        const expAmount = Number(buy_price) * Number(quantity);
+        const desc = `مشتريات مخزن: ${item.name} (${quantity} ${unit})`;
+        await pgClient.query(
+          "INSERT INTO transactions (office_id, created_by_user_id, amount, type, category, description) VALUES ($1,$2,$3,'مصروف','مشتريات',$4)",
+          [req.officeId, req.userId, expAmount, desc]
+        );
+        await pgClient.query(
+          "INSERT INTO treasury_movements (office_id, created_by_user_id, type, source, amount, description) VALUES ($1,$2,'withdraw','cash',$3,$4)",
+          [req.officeId, req.userId, expAmount, desc]
+        );
+      }
+
+      await pgClient.query('COMMIT');
+      res.status(201).json(item);
+    } catch (err) {
+      await pgClient.query('ROLLBACK');
+      throw err;
+    } finally {
+      pgClient.release();
+    }
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });

@@ -56,7 +56,7 @@ const Inventory = () => {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: "", category: "", buy_price: "", sell_wholesale: "",
-    sell_retail: "", quantity: "", min_quantity: "5", unit: "قطعة", supplier_id: ""
+    sell_retail: "", quantity: "", min_quantity: "5", unit: "قطعة", supplier_id: "", record_expense: false
   });
   const [returnForm, setReturnForm] = useState({ item_id: "", quantity: "", reason: "", type: "return" });
   const [damageForm, setDamageForm] = useState({ item_id: "", quantity: "", reason: "" });
@@ -104,8 +104,8 @@ const Inventory = () => {
     if (!form.name || !form.quantity) return;
     setLoading(true);
     try {
-      await axios.post(`${API}/api/inventory`, { ...form, supplier_id: form.supplier_id || undefined }, { headers });
-      setForm({ name: "", category: "", buy_price: "", sell_wholesale: "", sell_retail: "", quantity: "", min_quantity: "5", unit: "قطعة", supplier_id: "" });
+      await axios.post(`${API}/api/inventory`, { ...form, supplier_id: form.supplier_id || undefined, record_expense: form.record_expense }, { headers });
+      setForm({ name: "", category: "", buy_price: "", sell_wholesale: "", sell_retail: "", quantity: "", min_quantity: "5", unit: "قطعة", supplier_id: "", record_expense: false });
       setShowForm(false);
       fetchItems();
     } catch (err) { console.error(err); }
@@ -312,6 +312,14 @@ const Inventory = () => {
                     <option value="">اختر المورد</option>
                     {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
+                </div>
+                <div className="flex items-end">
+                  <label className="flex items-center gap-2 cursor-pointer" style={{ color: "var(--color-text-secondary)" }}>
+                    <input type="checkbox" checked={form.record_expense}
+                      onChange={(e) => setForm({ ...form, record_expense: e.target.checked })}
+                      className="w-4 h-4 rounded" style={{ accentColor: "var(--color-accent)" }} />
+                    <span className="text-sm">تسديد التكلفة من الخزنة</span>
+                  </label>
                 </div>
               </div>
               <div className="flex gap-3">
