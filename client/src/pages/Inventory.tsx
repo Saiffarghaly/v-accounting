@@ -320,6 +320,11 @@ const Inventory = () => {
                       className="w-4 h-4 rounded" style={{ accentColor: "var(--color-accent)" }} />
                     <span className="text-sm">تسديد التكلفة من الخزنة</span>
                   </label>
+                  {form.record_expense && Number(form.buy_price) > 0 && Number(form.quantity) > 0 && (
+                    <span className="text-xs mr-3" style={{ color: "var(--color-danger)" }}>
+                      ({(Number(form.buy_price) * Number(form.quantity)).toLocaleString()} ج)
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex gap-3">
