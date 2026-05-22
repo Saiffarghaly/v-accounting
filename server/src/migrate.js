@@ -260,6 +260,9 @@ CREATE TABLE IF NOT EXISTS supplier_debts (
   status VARCHAR(20) DEFAULT 'active',
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS invoice_id INTEGER REFERENCES invoices(id) ON DELETE SET NULL;
+ALTER TABLE treasury_movements ADD COLUMN IF NOT EXISTS invoice_id INTEGER REFERENCES invoices(id) ON DELETE SET NULL;
     `);
 
     console.log('✅ All tables created successfully!');
