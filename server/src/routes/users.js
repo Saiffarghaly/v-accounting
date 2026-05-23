@@ -1,23 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { requireResourceLimit } = require('../subscription-check');
-
-const auth = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token' });
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.officeId = decoded.officeId;
-    req.userId = decoded.userId || null;
-    req.role = decoded.role || 'owner';
-    next();
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-};
+const { authWithSubscription: auth, requireResourceLimit } = require('../subscription-check');
 
 const ownerOnly = (req, res, next) => {
   if (req.role !== 'owner') return res.status(403).json({ error: 'Owner only' });

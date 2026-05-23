@@ -1,30 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const jwt = require('jsonwebtoken');
-const { requireResourceLimit } = require('../subscription-check');
+const { authWithSubscription: auth, requireResourceLimit } = require('../subscription-check');
 
-// Middleware to verify token
-const auth = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token' });
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.officeId = decoded.officeId;
-    req.userId = decoded.userId || null;
-    next();
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-};
-
-const ensureAuditColumn = async () => {
-  await pool.query(
-    'ALTER TABLE transactions ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL'
-  );
-};
-
-// Get all transactions for this office
 router.get('/', auth, async (req, res) => {
   try {
     await ensureAuditColumn();

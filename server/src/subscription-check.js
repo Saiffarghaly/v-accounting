@@ -1,4 +1,5 @@
 const pool = require('./db');
+const jwt = require('jsonwebtoken');
 
 // Get subscription + plan details with auto-expiry
 const getSubscription = async (officeId) => {
@@ -139,10 +140,43 @@ const resourceLabels = {
   inventory: 'الأصناف',
 };
 
+// Combined auth + active subscription check
+const authWithSubscription = async (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.officeId = decoded.officeId;
+    req.userId = decoded.userId || null;
+    req.role = decoded.role || 'owner';
+  } catch {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+
+  try {
+    const sub = await getSubscription(req.officeId);
+    if (!sub) {
+      return res.status(403).json({ error: 'لا يوجد اشتراك نشط', code: 'no_subscription' });
+    }
+    if (sub.status === 'expired') {
+      return res.status(403).json({ error: 'انتهت صلاحية الاشتراك. جدد اشتراكك من صفحة الاشتراك', code: 'expired' });
+    }
+    if (sub.status !== 'active') {
+      return res.status(403).json({ error: 'الاشتراك غير نشط', code: 'inactive' });
+    }
+    req.subscription = sub;
+    next();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 module.exports = {
   getSubscription,
   checkResourceLimit,
   getUsageSummary,
   requireActiveSubscription,
   requireResourceLimit,
+  authWithSubscription,
 };

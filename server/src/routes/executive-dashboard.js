@@ -1,26 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const jwt = require('jsonwebtoken');
+const { authWithSubscription: auth } = require('../subscription-check');
 
 const INCOME_TYPE = 'إيراد';
 const EXPENSE_TYPE = 'مصروف';
 const SALES_CATEGORY = 'مبيعات';
 const OTHER_CATEGORY = 'أخرى';
 const SUPPLIER_PAID_TYPE = 'مدفوع';
-
-const auth = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'No token' });
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.officeId = decoded.officeId;
-    req.userId = decoded.userId || null;
-    next();
-  } catch {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-};
 
 const formatDate = (date) => {
   const year = date.getFullYear();
