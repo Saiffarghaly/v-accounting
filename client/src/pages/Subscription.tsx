@@ -2,6 +2,18 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 
+interface FawryData {
+  merchantCode: string;
+  merchantRef: string;
+  fawryRefCode: string;
+  paymentUrl: string | null;
+  amount: number;
+  description: string;
+  customer: { name: string; email: string; mobile: string };
+  signature: string;
+  chargeItems: { itemId: string; description: string; price: number; quantity: number }[];
+}
+
 interface Plan {
   id: number;
   name: string;
@@ -69,6 +81,7 @@ const Subscription = () => {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [upgrading, setUpgrading] = useState(false);
   const [message, setMessage] = useState("");
+  const [pendingFawry, setPendingFawry] = useState<FawryData | null>(null);
 
   useEffect(() => {
     const fetch = async () => {
@@ -97,13 +110,13 @@ const Subscription = () => {
   const handleUpgrade = async (planId: number) => {
     setUpgrading(true);
     setMessage("");
+    setPendingFawry(null);
     try {
       const res = await axios.post(`${API}/api/subscriptions`, { plan_id: planId, billing_cycle: billingCycle }, { headers });
       const { subscription: sub, payment, fawry } = res.data;
 
       if (fawry) {
-        setMessage(`✅ تم إنشاء طلب الدفع. استخدم كود المرجع ${fawry.merchantRefCode || fawry.merchantRef} عند الدفع عبر فوري.\nالمبلغ: ${fawry.amount} ج.م`);
-        // Also refresh
+        setPendingFawry(fawry);
         const subRes = await axios.get(`${API}/api/subscriptions`, { headers });
         setSubscription(subRes.data);
       } else {
@@ -111,7 +124,6 @@ const Subscription = () => {
         setMessage("✅ تم تفعيل الباقة بنجاح!");
       }
 
-      // Refresh payments
       const payRes = await axios.get(`${API}/api/subscriptions/payments`, { headers });
       setPayments(payRes.data);
     } catch (err: any) {
@@ -125,8 +137,11 @@ const Subscription = () => {
     try {
       await axios.post(`${API}/api/subscriptions/confirm`, { subscription_id: subId }, { headers });
       setMessage("✅ تم تأكيد الدفع وتفعيل الاشتراك");
+      setPendingFawry(null);
       const subRes = await axios.get(`${API}/api/subscriptions`, { headers });
       setSubscription(subRes.data);
+      const payRes = await axios.get(`${API}/api/subscriptions/payments`, { headers });
+      setPayments(payRes.data);
     } catch (err: any) {
       setMessage(err.response?.data?.error || "حدث خطأ");
     }
@@ -148,7 +163,7 @@ const Subscription = () => {
       <h3 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>💳 الاشتراك والفواتير</h3>
 
       {message && (
-        <div className="rounded-xl p-4 text-sm whitespace-pre-line" style={{ background: "var(--color-info-light)", color: "var(--color-info)", border: "1px solid var(--color-info-light)" }}>
+        <div className="rounded-xl p-4 text-sm" style={{ background: message.includes("❌") || message.includes("خطأ") ? "var(--color-danger-light)" : "var(--color-info-light)", color: message.includes("❌") || message.includes("خطأ") ? "var(--color-danger)" : "var(--color-info)", border: "1px solid var(--color-info-light)" }}>
           {message}
           <button onClick={() => setMessage("")} className="mr-2 text-xs" style={{ color: "var(--color-text-muted)" }}>✕</button>
         </div>
@@ -210,6 +225,56 @@ const Subscription = () => {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Fawry Payment Dialog */}
+      {pendingFawry && (
+        <div className="rounded-xl p-6 border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)", boxShadow: "var(--shadow-card)" }}>
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-bold text-lg" style={{ color: "var(--color-text-primary)" }}>💳 الدفع عبر فوري</h4>
+            <button onClick={() => setPendingFawry(null)} className="text-sm" style={{ color: "var(--color-text-muted)" }}>✕</button>
+          </div>
+          <div className="space-y-3">
+            <div className="p-4 rounded-lg" style={{ background: "var(--color-info-light)" }}>
+              <p className="font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                المبلغ: <span className="text-xl" style={{ color: "var(--color-accent)" }}>{pendingFawry.amount.toLocaleString()} ج.م</span>
+              </p>
+              <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>{pendingFawry.description}</p>
+            </div>
+
+            <div className="p-4 rounded-lg text-center" style={{ background: "var(--color-bg-input)" }}>
+              <p className="text-sm mb-2" style={{ color: "var(--color-text-secondary)" }}>كود المرجع للدفع في منافذ فوري:</p>
+              <p className="text-2xl font-bold font-mono tracking-wider ltr" style={{ color: "var(--color-accent)", direction: "ltr", textAlign: "center" }}>
+                {pendingFawry.fawryRefCode}
+              </p>
+              <button
+                onClick={() => { navigator.clipboard.writeText(pendingFawry.fawryRefCode); setMessage("✅ تم نسخ الكود"); }}
+                className="mt-2 text-sm px-4 py-1 rounded-lg transition"
+                style={{ background: "var(--color-accent)", color: "#fff" }}
+              >📋 نسخ الكود</button>
+            </div>
+
+            {pendingFawry.paymentUrl && (
+              <a href={pendingFawry.paymentUrl} target="_blank" rel="noopener noreferrer"
+                className="block w-full text-center py-3 rounded-lg font-semibold transition"
+                style={{ background: "var(--color-accent)", color: "#fff" }}>
+                🔗 الدفع أونلاين
+              </a>
+            )}
+
+            <div className="text-sm space-y-1" style={{ color: "var(--color-text-muted)" }}>
+              <p>📌 <strong>طريقة الدفع:</strong></p>
+              <ol className="list-decimal mr-5 space-y-1">
+                <li>اذهب إلى أي فرع من فروع فوري أو ماكينة فوري القريبة منك</li>
+                <li>اختر "دفع الفواتير" ← "فوري"</li>
+                <li>أدخل كود المرجع أعلاه: <strong dir="ltr">{pendingFawry.fawryRefCode}</strong></li>
+                <li>ادفع المبلغ المطلوب ({pendingFawry.amount.toLocaleString()} ج.م)</li>
+                <li>سيتم تفعيل اشتراكك تلقائياً بعد تأكيد الدفع</li>
+              </ol>
+              <p className="mt-2">⏳ يستغرق التأكيد بضع دقائق. يمكنك متابعة حالة الاشتراك من هذه الصفحة.</p>
+            </div>
           </div>
         </div>
       )}

@@ -104,19 +104,53 @@ router.post('/', auth, async (req, res) => {
     );
     const subscription = subRes.rows[0];
 
-    // Generate Fawry ref code
+    // Generate unique merchant ref
     const merchantRef = `SUB-${req.officeId}-${subscription.id}-${Date.now()}`;
-    const fawrySignature = crypto
-      .createHmac('sha256', FAWRY_SECRET)
-      .update(`${FAWRY_MERCHANT}${merchantRef}${price.toFixed(2)}EGP`)
-      .digest('hex');
 
-    // In production, this would call Fawry API.
-    // For MVP, we generate the ref code locally and provide instructions.
+    // Build Fawry signature: merchantCode + merchantRefNum + amount + currencyCode + secret
+    const signStr = `${FAWRY_MERCHANT}${merchantRef}${price.toFixed(2)}EGP`;
+    const fawrySignature = crypto.createHmac('sha256', FAWRY_SECRET).update(signStr).digest('hex');
+
+    // Prepare Fawry charge request body
+    const chargeBody = {
+      merchantCode: FAWRY_MERCHANT,
+      merchantRefNum: merchantRef,
+      customerName: office.name,
+      customerEmail: office.email,
+      customerMobile: office.phone || office.email,
+      amount: price,
+      currencyCode: 'EGP',
+      chargeItems: [{ itemId: plan.code, description: `اشتراك ${plan.name} - ${cycle === 'yearly' ? 'سنوي' : 'شهري'}`, price, quantity: 1 }],
+      signature: fawrySignature,
+    };
+
+    let fawryRefCode = merchantRef; // fallback
+    let fawryPaymentUrl = null;
+
+    // Call Fawry API (skip if credentials are dummy)
+    try {
+      if (FAWRY_MERCHANT && FAWRY_SECRET && FAWRY_MERCHANT !== 'dummy') {
+        const fawryRes = await fetch(`${FAWRY_BASE}/charges`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(chargeBody),
+        });
+        const fawryData = await fawryRes.json();
+        if (fawryData.fawryRefCode) {
+          fawryRefCode = fawryData.fawryRefCode;
+        }
+        if (fawryData.paymentUrl) {
+          fawryPaymentUrl = fawryData.paymentUrl;
+        }
+      }
+    } catch (fawryErr) {
+      console.warn('Fawry API call failed, using local ref code:', fawryErr.message);
+    }
+
     const paymentRes = await pool.query(
       `INSERT INTO payment_transactions (office_id, subscription_id, plan_id, amount, currency, payment_method, fawry_ref_code, status, description)
        VALUES ($1, $2, $3, $4, 'EGP', 'fawry', $5, 'pending', $6) RETURNING *`,
-      [req.officeId, subscription.id, plan_id, price, merchantRef, `تجديد اشتراك ${plan.name} (${cycle === 'yearly' ? 'سنوي' : 'شهري'})`]
+      [req.officeId, subscription.id, plan_id, price, fawryRefCode, `تجديد اشتراك ${plan.name} (${cycle === 'yearly' ? 'سنوي' : 'شهري'})`]
     );
 
     res.json({
@@ -125,11 +159,13 @@ router.post('/', auth, async (req, res) => {
       fawry: {
         merchantCode: FAWRY_MERCHANT,
         merchantRef,
+        fawryRefCode,
+        paymentUrl: fawryPaymentUrl,
         amount: price,
         description: `اشتراك ${plan.name}`,
         customer: { name: office.name, email: office.email, mobile: office.phone || '' },
         signature: fawrySignature,
-        chargeItems: [{ itemId: plan.code, description: `اشتراك ${plan.name} - ${cycle === 'yearly' ? 'سنوي' : 'شهري'}`, price, quantity: 1 }],
+        chargeItems: chargeBody.chargeItems,
       },
     });
   } catch (err) {
