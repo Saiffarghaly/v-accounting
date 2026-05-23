@@ -53,12 +53,18 @@ const cycleLabels: Record<string, string> = { monthly: "شهري", yearly: "سن
 const statusLabels: Record<string, string> = { active: "نشط", pending: "قيد الانتظار", expired: "منتهي", cancelled: "ملغي" };
 const statusColors: Record<string, string> = { active: "var(--color-success)", pending: "var(--color-warning)", expired: "var(--color-danger)", cancelled: "var(--color-text-muted)" };
 
+interface UsageSummary {
+  subscription: Subscription;
+  resources: Record<string, { usage: number; limit: number; unlimited: boolean; remaining: number }>;
+}
+
 const Subscription = () => {
   const { token } = useAuth();
   const headers = { Authorization: `Bearer ${token}` };
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [upgrading, setUpgrading] = useState(false);
@@ -68,14 +74,16 @@ const Subscription = () => {
     const fetch = async () => {
       setLoading(true);
       try {
-        const [subRes, plansRes, payRes] = await Promise.all([
+        const [subRes, plansRes, payRes, usageRes] = await Promise.all([
           axios.get(`${API}/api/subscriptions`, { headers }),
           axios.get(`${API}/api/subscriptions/plans`, { headers }),
           axios.get(`${API}/api/subscriptions/payments`, { headers }),
+          axios.get(`${API}/api/subscriptions/usage`, { headers }).catch(() => null),
         ]);
         setSubscription(subRes.data);
         setPlans(plansRes.data);
         setPayments(payRes.data);
+        setUsage(usageRes?.data || null);
         setBillingCycle(subRes.data.billing_cycle || "monthly");
       } catch (err) {
         console.error(err);
@@ -173,6 +181,35 @@ const Subscription = () => {
           </div>
           <div className="mt-4">
             <Labels features={subscription.features || []} />
+          </div>
+        </div>
+      )}
+
+      {/* Usage Summary */}
+      {usage && (
+        <div className="rounded-xl p-6 border" style={{ background: "var(--color-bg-card)", borderColor: "var(--color-border)", boxShadow: "var(--shadow-card)" }}>
+          <h4 className="font-semibold mb-4" style={{ color: "var(--color-text-primary)" }}>📊 استخدام الباقة</h4>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {Object.entries(usage.resources).map(([key, val]) => {
+              const pct = val.unlimited ? 0 : Math.min((val.usage / val.limit) * 100, 100);
+              const labels: Record<string, string> = { users: "المستخدمين", transactions: "المعاملات", invoices: "الفواتير", clients: "العملاء", inventory: "الأصناف" };
+              const nearLimit = !val.unlimited && pct >= 80;
+              return (
+                <div key={key}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span style={{ color: "var(--color-text-secondary)" }}>{labels[key] || key}</span>
+                    <span className="font-medium" style={{ color: nearLimit ? "var(--color-danger)" : "var(--color-text-primary)" }}>
+                      {val.unlimited ? "غير محدود" : `${val.usage} / ${val.limit}`}
+                    </span>
+                  </div>
+                  {!val.unlimited && (
+                    <div className="w-full h-2 rounded-full" style={{ background: "var(--color-border)" }}>
+                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: nearLimit ? "var(--color-danger)" : "var(--color-success)" }} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

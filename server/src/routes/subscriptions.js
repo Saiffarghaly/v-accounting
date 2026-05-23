@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { getUsageSummary } = require('../subscription-check');
 
 const auth = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -231,6 +232,18 @@ router.get('/payments', auth, async (req, res) => {
       [req.officeId]
     );
     res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ─── GET usage summary ───
+router.get('/usage', auth, async (req, res) => {
+  try {
+    const summary = await getUsageSummary(req.officeId);
+    if (!summary) return res.status(404).json({ error: 'No subscription' });
+    res.json(summary);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });

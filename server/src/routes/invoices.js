@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
+const { requireResourceLimit } = require('../subscription-check');
 
 const auth = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -49,7 +50,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // Add invoice (supports both simple and sales types)
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, requireResourceLimit('invoices'), async (req, res) => {
   const { client_id, client_name, amount, status, due_date, type, items, notes } = req.body;
   const invType = type || 'simple';
   const invStatus = status || 'pending';

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
+const { requireResourceLimit } = require('../subscription-check');
 
 // Middleware to verify token
 const auth = (req, res, next) => {
@@ -44,7 +45,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // Add transaction
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, requireResourceLimit('transactions'), async (req, res) => {
   const { amount, type, category, description, date } = req.body;
   try {
     await ensureAuditColumn();

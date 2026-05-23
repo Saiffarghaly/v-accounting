@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
+const { getUsageSummary } = require('../subscription-check');
 
 const auth = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -37,11 +38,31 @@ router.get('/', auth, async (req, res) => {
       [req.officeId]
     );
 
+    // Check for near-limit resources
+    const usageSummary = await getUsageSummary(req.officeId);
+    const limit_warnings = [];
+    if (usageSummary) {
+      for (const [resource, data] of Object.entries(usageSummary.resources)) {
+        if (!data.unlimited && data.remaining <= Math.ceil(data.limit * 0.2)) {
+          const labels = { users: 'المستخدمين', transactions: 'المعاملات', invoices: 'الفواتير', clients: 'العملاء', inventory: 'الأصناف' };
+          limit_warnings.push({
+            resource,
+            label: labels[resource] || resource,
+            usage: data.usage,
+            limit: data.limit,
+            remaining: data.remaining,
+            near_full: data.remaining === 0,
+          });
+        }
+      }
+    }
+
     res.json({
       due_invoices: dueInvoices.rows,
       low_inventory: lowInventory.rows,
       daily_summary: todaySummary.rows[0] || { income: 0, expenses: 0 },
       overdue_debts: overdueDebts.rows,
+      limit_warnings,
     });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });

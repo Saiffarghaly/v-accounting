@@ -103,6 +103,19 @@ const Dashboard = () => {
   const [stats, setStats] = useState<Stats | null>(null);
   const [alerts, setAlerts] = useState<AlertData | null>(null);
   const [showAlerts, setShowAlerts] = useState(false);
+  const [subExpired, setSubExpired] = useState(false);
+
+  // Check subscription status on load
+  useEffect(() => {
+    axios.get(`${API}/api/subscriptions`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => { if (res.data.status === 'expired') setSubExpired(true); })
+      .catch(() => setSubExpired(true));
+  }, []);
+
+  // Redirect expired users
+  useEffect(() => {
+    if (subExpired) setActivePage("subscription");
+  }, [subExpired]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -189,6 +202,11 @@ const Dashboard = () => {
         <div className="p-4 flex justify-center" style={{ borderBottom: "1px solid var(--color-bg-sidebar-hover)" }}>
           <BrandWordmark variant="onDarkGreen" size="md" />
         </div>
+        {subExpired && (
+          <div className="mx-3 mt-2 p-2 rounded-lg text-xs text-center font-semibold" style={{ background: "var(--color-danger)", color: "#fff" }}>
+            ⚠️ الاشتراك منتهي — جدد اشتراكك
+          </div>
+        )}
         <nav className="flex-1 p-3 space-y-0.5 overflow-auto">
           {navItems.map((item) => (
             <button
@@ -303,7 +321,17 @@ const Dashboard = () => {
                         <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>{overdueDebts.length} دين تجاوز تاريخ الاستحقاق</p>
                       </div>
                     )}
-                    {alerts?.daily_summary && (
+                    {alerts?.limit_warnings?.map((w: { resource: string; label: string; usage: number; limit: number; remaining: number; near_full: boolean }, i: number) => (
+              <div key={i} className="p-3 rounded-lg text-sm" style={{ background: w.near_full ? "var(--color-danger-light)" : "var(--color-warning-light)" }}>
+                <p className="font-medium" style={{ color: w.near_full ? "var(--color-danger)" : "var(--color-warning)" }}>
+                  {w.near_full ? "⛔" : "⚠️"} {w.label}: {w.usage}/{w.limit}
+                </p>
+                <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
+                  {w.near_full ? "انتهت السعة المتاحة. قم بترقية باقتك" : `تبقى ${w.remaining} فقط. قم بترقية باقتك`}
+                </p>
+              </div>
+            ))}
+            {alerts?.daily_summary && (
                       <div className="p-3 rounded-lg text-sm" style={{ background: "var(--color-success-light)" }}>
                         <p className="font-medium" style={{ color: "var(--color-success)" }}>📊 ملخص اليوم</p>
                         <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>

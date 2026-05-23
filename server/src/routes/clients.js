@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
+const { requireResourceLimit } = require('../subscription-check');
 
 const auth = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -43,7 +44,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // Add client
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, requireResourceLimit('clients'), async (req, res) => {
   const { name, email, phone, address } = req.body;
   try {
     await ensureAuditColumn();

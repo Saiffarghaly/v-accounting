@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const { requireResourceLimit } = require('../subscription-check');
 
 const auth = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -50,7 +51,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // Add user to office
-router.post('/', auth, ownerOnly, async (req, res) => {
+router.post('/', auth, ownerOnly, requireResourceLimit('users'), async (req, res) => {
   const { name, email, password, role } = req.body;
   try {
     await ensureAuditColumn();
