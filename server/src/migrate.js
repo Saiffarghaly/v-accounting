@@ -319,6 +319,11 @@ SELECT * FROM (VALUES
 ) AS v
 WHERE NOT EXISTS (SELECT 1 FROM subscription_plans);
 
+-- Update existing plans with new prices
+UPDATE subscription_plans SET price_monthly = 500, price_yearly = 5000 WHERE code = 'standard';
+UPDATE subscription_plans SET price_monthly = 1000, price_yearly = 10000 WHERE code = 'premium';
+UPDATE subscription_plans SET price_monthly = 2500, price_yearly = 25000 WHERE code = 'enterprise';
+
 -- Auto-create free subscription for existing offices without one
 INSERT INTO subscriptions (office_id, plan_id, status, started_at)
 SELECT o.id, sp.id, 'active', NOW()
