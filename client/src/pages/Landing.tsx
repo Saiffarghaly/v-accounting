@@ -134,7 +134,7 @@ const Landing = ({
       </section>
 
       {/* Pricing */}
-      <section className="py-20 px-8 max-w-4xl mx-auto">
+      <section className="py-20 px-8 max-w-6xl mx-auto">
         <h3 className="text-3xl font-bold text-center mb-4">
           أسعار بسيطة وشفافة
         </h3>
@@ -143,72 +143,102 @@ const Landing = ({
           ابدأ مجاناً — لا بطاقة ائتمانية مطلوبة
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             {
               name: "مجاني",
               price: "0",
+              desc: "للمكاتب الصغيرة",
               color: "border-gray-300",
               features: [
-                "مكتب واحد",
-                "حتى 100 معاملة",
-                "3 عملاء",
-                "تقارير أساسية",
+                "مستخدم واحد",
+                "100 معاملة/شهر",
+                "20 فاتورة/شهر",
+                "20 عميل",
+                "50 صنف بالمخزن",
               ],
               cta: "ابدأ مجاناً",
               action: onRegister,
               highlight: false,
             },
             {
-              name: "احترافي",
-              price: "0",
+              name: "قياسي",
+              price: "500",
+              desc: "للمكاتب المتوسطة",
+              color: "border-blue-400",
+              features: [
+                "3 مستخدمين",
+                "1000 معاملة/شهر",
+                "200 فاتورة/شهر",
+                "200 عميل",
+                "500 صنف بالمخزن",
+                "تقارير متقدمة",
+                "دعم عبر الواتساب",
+              ],
+              cta: "ابدأ الآن",
+              action: onRegister,
+              highlight: false,
+            },
+            {
+              name: "مميز",
+              price: "1,000",
+              desc: "للمكاتب الكبيرة",
               color: "border-[#217346]",
               features: [
-                "مكاتب غير محدودة",
+                "10 مستخدمين",
                 "معاملات غير محدودة",
+                "فواتير غير محدودة",
                 "عملاء غير محدودين",
-                "تقارير متقدمة",
-                "استيراد Excel",
-                "PDF Export",
-                "دعم فني",
+                "مخزن غير محدود",
+                "كل التقارير والتحليلات",
+                "دعم فوري 24/7",
               ],
-              cta: "ابدأ التجربة",
+              cta: "الأكثر طلباً",
               action: onRegister,
               highlight: true,
+            },
+            {
+              name: "شركات",
+              price: "2,500",
+              desc: "للشركات والمؤسسات",
+              color: "border-purple-400",
+              features: [
+                "مستخدمين غير محدودين",
+                "كل شيء غير محدود",
+                "مساعد ذكي مخصص",
+                "دعم فني 24/7",
+                "تكامل مع الأنظمة",
+                "لوحة تحكم تنفيذية",
+                "تطبيق جوال كامل",
+              ],
+              cta: "تواصل معنا",
+              action: onRegister,
+              highlight: false,
             },
           ].map((plan, i) => (
             <div
               key={i}
-              className={`bg-white border-2 ${plan.color} rounded-xl p-8 shadow-sm ${
-                plan.highlight ? "relative" : ""
+              className={`bg-white border-2 ${plan.color} rounded-xl p-8 shadow-sm flex flex-col ${
+                plan.highlight ? "relative scale-105" : ""
               }`}
             >
               {plan.highlight && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#217346] text-white text-xs px-4 py-1 rounded-full">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#217346] text-white text-xs px-4 py-1 rounded-full whitespace-nowrap">
                   الأكثر شيوعاً
                 </div>
               )}
 
-              <h4 className="text-xl font-bold mb-2">
-                {plan.name}
-              </h4>
+              <h4 className="text-xl font-bold mb-1">{plan.name}</h4>
+              <p className="text-xs text-gray-500 mb-4">{plan.desc}</p>
 
               <div className="flex items-baseline gap-1 mb-6">
-                <span className="text-4xl font-bold">
-                  {plan.price}
-                </span>
-
-                <span className="text-gray-500">
-                  ج.م / شهر
-                </span>
+                <span className="text-4xl font-bold">{plan.price}</span>
+                <span className="text-gray-500">ج.م / شهر</span>
               </div>
 
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-3 mb-8 flex-1">
                 {plan.features.map((f, j) => (
-                  <li
-                    key={j}
-                    className="flex items-center gap-2 text-sm text-gray-700"
-                  >
+                  <li key={j} className="flex items-center gap-2 text-sm text-gray-700">
                     <span className="text-green-600">✓</span>
                     {f}
                   </li>
