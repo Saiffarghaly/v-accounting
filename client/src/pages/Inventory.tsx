@@ -297,7 +297,7 @@ const Inventory = () => {
                 ].map((field) => (
                   <div key={field.key}>
                     <label className="text-sm mb-1 block" style={{ color: "var(--color-text-secondary)" }}>{field.label}</label>
-                    <input type={field.type} value={form[field.key as keyof typeof form]}
+                    <input type={field.type} value={String(form[field.key as keyof typeof form] ?? "")}
                       onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
                       placeholder={field.placeholder}
                       style={{ background: "var(--color-bg-input)", borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}

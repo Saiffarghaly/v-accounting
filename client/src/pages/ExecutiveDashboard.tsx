@@ -3,7 +3,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, AreaChart, Area, LineChart, Line,
+  PieChart, Pie, Cell, AreaChart, Area,
 } from "recharts";
 
 interface CashBreakdown {
@@ -22,6 +22,7 @@ interface Analysis {
   debtAging: { overdue: number; dueSoon: number; future: number };
   topSuppliers: { name: string; balance: number }[];
   salariesByEmployee: { name: string; total: number }[];
+  bankDistribution: { id: number; bank_name: string; account_name: string; value: number }[];
 }
 interface DashboardData {
   netProfitLoss: number; totalLiquidCash: number; totalReceivables: number; totalPayables: number;
@@ -30,13 +31,26 @@ interface DashboardData {
 
 const API = import.meta.env.VITE_API_URL || "https://v-accounting-production.up.railway.app";
 const COLORS = ["#217346", "#c62828", "#f9a825", "#1565c0", "#6a1b9a", "#e65100", "#00838f", "#2e7d32", "#ad1457", "#283593"];
-const STATUS_LABELS: Record<string, string> = { paid: "مدفوعة", pending: "معلقة", cancelled: "ملغية" };
+const STATUS_LABELS: Record<string, string> = { paid: "مدفوعة", pending: "معلقة", cancelled: "ملغية", unpaid: "غير مدفوعة" };
+const formatCurrencyTooltip = (value: unknown) => `${Number(value || 0).toLocaleString()} ج`;
+const makePieLabel = (key: string) => (props: any) => {
+  const label = props?.payload?.[key] ?? props?.[key] ?? "";
+  const percent = typeof props?.percent === "number" ? props.percent : 0;
+  return `${label} ${(percent * 100).toFixed(0)}%`;
+};
+
+const formatLocalDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 const DateFilter = ({ value, customStart, customEnd, onChange, onCustomStartChange, onCustomEndChange }: {
   value: string; customStart: string; customEnd: string; onChange: (v: string) => void;
   onCustomStartChange: (v: string) => void; onCustomEndChange: (v: string) => void;
 }) => {
-  const today = new Date().toISOString().split("T")[0];
+  const today = formatLocalDate(new Date());
   const options = [
     { id: "today", label: "اليوم" }, { id: "week", label: "هذا الأسبوع" },
     { id: "month", label: "هذا الشهر" }, { id: "custom", label: "مخصص" },
@@ -110,7 +124,6 @@ const ChartTooltip = ({ active, payload, label }: any) => {
 
 const ExecutiveDashboard = () => {
   const { token } = useAuth();
-  const headers = { Authorization: `Bearer ${token}` };
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [dateFilter, setDateFilter] = useState("month");
@@ -120,15 +133,15 @@ const ExecutiveDashboard = () => {
   const getDateRange = useMemo(() => {
     const now = new Date(); const y = now.getFullYear(); const m = now.getMonth(); const d = now.getDate();
     switch (dateFilter) {
-      case "today": return { startDate: now.toISOString().split("T")[0], endDate: now.toISOString().split("T")[0] };
+      case "today": return { startDate: formatLocalDate(now), endDate: formatLocalDate(now) };
       case "week": {
         const start = new Date(now); start.setDate(d - now.getDay());
         const end = new Date(start); end.setDate(start.getDate() + 6);
-        return { startDate: start.toISOString().split("T")[0], endDate: end.toISOString().split("T")[0] };
+        return { startDate: formatLocalDate(start), endDate: formatLocalDate(end) };
       }
-      case "month": return { startDate: `${y}-${String(m + 1).padStart(2, "0")}-01`, endDate: new Date(y, m + 1, 0).toISOString().split("T")[0] };
-      case "custom": return { startDate: customStart || `${y}-${String(m + 1).padStart(2, "0")}-01`, endDate: customEnd || now.toISOString().split("T")[0] };
-      default: return { startDate: `${y}-${String(m + 1).padStart(2, "0")}-01`, endDate: new Date(y, m + 1, 0).toISOString().split("T")[0] };
+      case "month": return { startDate: `${y}-${String(m + 1).padStart(2, "0")}-01`, endDate: formatLocalDate(new Date(y, m + 1, 0)) };
+      case "custom": return { startDate: customStart || `${y}-${String(m + 1).padStart(2, "0")}-01`, endDate: customEnd || formatLocalDate(now) };
+      default: return { startDate: `${y}-${String(m + 1).padStart(2, "0")}-01`, endDate: formatLocalDate(new Date(y, m + 1, 0)) };
     }
   }, [dateFilter, customStart, customEnd]);
 
@@ -136,13 +149,16 @@ const ExecutiveDashboard = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${API}/api/executive-dashboard`, { params: getDateRange, headers });
+        const res = await axios.get(`${API}/api/executive-dashboard`, {
+          params: getDateRange,
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setData(res.data);
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
     };
     fetchData();
-  }, [getDateRange]);
+  }, [getDateRange, token]);
 
   const netColor = data ? (data.netProfitLoss >= 0 ? "var(--color-success)" : "var(--color-danger)") : "var(--color-text-primary)";
   const netPrefix = data ? (data.netProfitLoss >= 0 ? "" : "-") : "";
@@ -151,9 +167,12 @@ const ExecutiveDashboard = () => {
 
   const statusData = useMemo(() => a?.invoiceStatus.map(s => ({ ...s, label: STATUS_LABELS[s.status] || s.status })) || [], [a]);
   const pieSize = { outerRadius: 80, innerRadius: 40, cx: "50%", cy: "50%" };
+  const debtAgingTotal = a ? a.debtAging.overdue + a.debtAging.dueSoon + a.debtAging.future : 0;
+  const receivablesPayablesMax = Math.max(data?.totalReceivables ?? 0, data?.totalPayables ?? 0, 1);
+  const bankDistributionData = a?.bankDistribution ?? [];
 
   return (
-    <div className="p-8 space-y-6">
+    <div dir="rtl" lang="ar" className="p-8 space-y-6">
       {/* Header + Date Filter */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h3 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>لوحة القيادة التنفيذية</h3>
@@ -229,10 +248,10 @@ const ExecutiveDashboard = () => {
             {a.incomeByCategory.length === 0 ? <EmptyChart /> : (
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
-                  <Pie data={a.incomeByCategory} dataKey="total" nameKey="category" {...pieSize} label={({ category, percent }) => `${category} ${(percent * 100).toFixed(0)}%`}>
+                  <Pie data={a.incomeByCategory} dataKey="total" nameKey="category" {...pieSize} label={makePieLabel("category")}>
                     {a.incomeByCategory.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={(v: number) => `${v.toLocaleString()} ج`} />
+                  <Tooltip formatter={formatCurrencyTooltip} />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -243,10 +262,10 @@ const ExecutiveDashboard = () => {
             {a.expensesByCategory.length === 0 ? <EmptyChart /> : (
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
-                  <Pie data={a.expensesByCategory} dataKey="total" nameKey="category" {...pieSize} label={({ category, percent }) => `${category} ${(percent * 100).toFixed(0)}%`}>
+                  <Pie data={a.expensesByCategory} dataKey="total" nameKey="category" {...pieSize} label={makePieLabel("category")}>
                     {a.expensesByCategory.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={(v: number) => `${v.toLocaleString()} ج`} />
+                  <Tooltip formatter={formatCurrencyTooltip} />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -288,10 +307,10 @@ const ExecutiveDashboard = () => {
             {a.inventoryByCategory.length === 0 ? <EmptyChart /> : (
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
-                  <Pie data={a.inventoryByCategory} dataKey="value" nameKey="category" {...pieSize} label={({ category, percent }) => `${category} ${(percent * 100).toFixed(0)}%`}>
+                  <Pie data={a.inventoryByCategory} dataKey="value" nameKey="category" {...pieSize} label={makePieLabel("category")}>
                     {a.inventoryByCategory.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={(v: number) => `${v.toLocaleString()} ج`} />
+                  <Tooltip formatter={formatCurrencyTooltip} />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -302,12 +321,12 @@ const ExecutiveDashboard = () => {
             {statusData.length === 0 ? <EmptyChart /> : (
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
-                  <Pie data={statusData} dataKey="total" nameKey="label" {...pieSize} label={({ label, percent }) => `${label} ${(percent * 100).toFixed(0)}%`}>
+                  <Pie data={statusData} dataKey="total" nameKey="label" {...pieSize} label={makePieLabel("label")}>
                     {statusData.map((s) => (
                       <Cell key={s.status} fill={s.status === "paid" ? "var(--color-success)" : s.status === "pending" ? "var(--color-warning)" : "var(--color-text-muted)"} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v: number) => `${v.toLocaleString()} ج`} />
+                  <Tooltip formatter={formatCurrencyTooltip} />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -339,12 +358,12 @@ const ExecutiveDashboard = () => {
           {/* ── 8. Debt Aging ── */}
           <ChartCard title="تحليل ديون الموردين" icon="💳">
             <div className="space-y-3">
-              <DebtBar label="متأخرة" value={a.debtAging.overdue} color="var(--color-danger)" />
-              <DebtBar label="مستحقة قريباً (7 أيام)" value={a.debtAging.dueSoon} color="var(--color-warning)" />
-              <DebtBar label="مستقبلية" value={a.debtAging.future} color="var(--color-success)" />
+              <DebtBar label="متأخرة" value={a.debtAging.overdue} color="var(--color-danger)" max={debtAgingTotal || 1} />
+              <DebtBar label="مستحقة قريباً (7 أيام)" value={a.debtAging.dueSoon} color="var(--color-warning)" max={debtAgingTotal || 1} />
+              <DebtBar label="مستقبلية" value={a.debtAging.future} color="var(--color-success)" max={debtAgingTotal || 1} />
               <div className="pt-2 text-center">
                 <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                  إجمالي الديون النشطة: {(a.debtAging.overdue + a.debtAging.dueSoon + a.debtAging.future).toLocaleString()} ج
+                  إجمالي الديون النشطة: {debtAgingTotal.toLocaleString()} ج
                 </span>
               </div>
             </div>
@@ -382,14 +401,14 @@ const ExecutiveDashboard = () => {
 
           {/* ── 11. Bank Distribution ── */}
           <ChartCard title="توزيع البنوك" icon="🏦">
-            {data?.cashBreakdown.banks?.length ? (
+            {bankDistributionData.length ? (
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
-                  <Pie data={data.cashBreakdown.banks} dataKey="balance" nameKey="bank_name" {...pieSize}
-                    label={({ bank_name, percent }) => `${bank_name} ${(percent * 100).toFixed(0)}%`}>
-                    {data.cashBreakdown.banks.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  <Pie data={bankDistributionData} dataKey="value" nameKey="bank_name" {...pieSize}
+                    label={makePieLabel("bank_name")}>
+                    {bankDistributionData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={(v: number) => `${v.toLocaleString()} ج`} />
+                  <Tooltip formatter={formatCurrencyTooltip} />
                 </PieChart>
               </ResponsiveContainer>
             ) : <EmptyChart />}
@@ -398,8 +417,8 @@ const ExecutiveDashboard = () => {
           {/* ── 12. Client Receivables vs Supplier Payables ── */}
           <ChartCard title="مقارنة الذمم" icon="⚖️">
             <div className="space-y-3">
-              <DebtBar label="المستحقات للعملاء" value={data?.totalReceivables ?? 0} color="var(--color-warning)" />
-              <DebtBar label="المديونيات للموردين" value={data?.totalPayables ?? 0} color="var(--color-danger)" />
+              <DebtBar label="المستحقات للعملاء" value={data?.totalReceivables ?? 0} color="var(--color-warning)" max={receivablesPayablesMax} />
+              <DebtBar label="المديونيات للموردين" value={data?.totalPayables ?? 0} color="var(--color-danger)" max={receivablesPayablesMax} />
               <div className="pt-2 text-center">
                 <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                   صافي الذمم: {((data?.totalReceivables ?? 0) - (data?.totalPayables ?? 0)).toLocaleString()} ج
@@ -420,9 +439,8 @@ const EmptyChart = () => (
   </div>
 );
 
-const DebtBar = ({ label, value, color }: { label: string; value: number; color: string }) => {
-  const maxVal = 1000000;
-  const pct = Math.min((value / maxVal) * 100, 100);
+const DebtBar = ({ label, value, color, max = 1 }: { label: string; value: number; color: string; max?: number }) => {
+  const pct = max > 0 ? Math.min((Math.abs(value) / max) * 100, 100) : 0;
   return (
     <div>
       <div className="flex justify-between text-sm mb-1">

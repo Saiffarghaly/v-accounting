@@ -19,7 +19,7 @@ import AIAssistant from "./components/AIAssistant";
 import ExecutiveDashboard from "./pages/ExecutiveDashboard";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, LineChart, Line, AreaChart, Area, Legend
+  ResponsiveContainer, Legend
 } from "recharts";
 
 interface AlertData {
@@ -141,7 +141,10 @@ const Dashboard = () => {
     }
   }, [activePage, canManageUsers]);
 
-  const totalAlerts = (alerts?.due_invoices?.length || 0) + (alerts?.low_inventory?.length || 0) + (alerts?.overdue_debts?.length || 0);
+  const dueInvoices = alerts?.due_invoices ?? [];
+  const lowInventory = alerts?.low_inventory ?? [];
+  const overdueDebts = alerts?.overdue_debts ?? [];
+  const totalAlerts = dueInvoices.length + lowInventory.length + overdueDebts.length;
 
   /* Compute anomaly: expenses this month vs avg of last 3 months */
   const anomaly = (() => {
@@ -279,22 +282,22 @@ const Dashboard = () => {
                     الإشعارات
                   </div>
                   <div className="max-h-80 overflow-auto p-2 space-y-2">
-                    {alerts?.due_invoices?.length > 0 && (
+                    {dueInvoices.length > 0 && (
                       <div className="p-3 rounded-lg text-sm" style={{ background: "var(--color-warning-light)" }}>
                         <p className="font-medium" style={{ color: "var(--color-warning)" }}>📄 فواتير اقتربت من الاستحقاق</p>
-                        <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>{alerts.due_invoices.length} فاتورة مستحقة خلال 3 أيام</p>
+                        <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>{dueInvoices.length} فاتورة مستحقة خلال 3 أيام</p>
                       </div>
                     )}
-                    {alerts?.low_inventory?.length > 0 && (
+                    {lowInventory.length > 0 && (
                       <div className="p-3 rounded-lg text-sm" style={{ background: "var(--color-danger-light)" }}>
                         <p className="font-medium" style={{ color: "var(--color-danger)" }}>📦 مخزن وصل للحد الأدنى</p>
-                        <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>{alerts.low_inventory.length} صنف يحتاج لإعادة توريد</p>
+                        <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>{lowInventory.length} صنف يحتاج لإعادة توريد</p>
                       </div>
                     )}
-                    {alerts?.overdue_debts?.length > 0 && (
+                    {overdueDebts.length > 0 && (
                       <div className="p-3 rounded-lg text-sm" style={{ background: "var(--color-danger-light)" }}>
                         <p className="font-medium" style={{ color: "var(--color-danger)" }}>💳 ديون متأخرة</p>
-                        <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>{alerts.overdue_debts.length} دين تجاوز تاريخ الاستحقاق</p>
+                        <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>{overdueDebts.length} دين تجاوز تاريخ الاستحقاق</p>
                       </div>
                     )}
                     {alerts?.daily_summary && (
