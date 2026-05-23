@@ -263,6 +263,69 @@ CREATE TABLE IF NOT EXISTS supplier_debts (
 
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS invoice_id INTEGER REFERENCES invoices(id) ON DELETE SET NULL;
 ALTER TABLE treasury_movements ADD COLUMN IF NOT EXISTS invoice_id INTEGER REFERENCES invoices(id) ON DELETE SET NULL;
+
+-- Subscription system
+CREATE TABLE IF NOT EXISTS subscription_plans (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  code VARCHAR(50) UNIQUE NOT NULL,
+  price_monthly DECIMAL(10,2) NOT NULL DEFAULT 0,
+  price_yearly DECIMAL(10,2) NOT NULL DEFAULT 0,
+  max_users INTEGER DEFAULT 1,
+  max_transactions INTEGER DEFAULT -1,
+  max_invoices INTEGER DEFAULT -1,
+  max_clients INTEGER DEFAULT -1,
+  max_inventory_items INTEGER DEFAULT -1,
+  features TEXT[] DEFAULT '{}',
+  is_active BOOLEAN DEFAULT true,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id SERIAL PRIMARY KEY,
+  office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  plan_id INTEGER REFERENCES subscription_plans(id) ON DELETE SET NULL,
+  status VARCHAR(20) DEFAULT 'active',
+  billing_cycle VARCHAR(10) DEFAULT 'monthly',
+  started_at TIMESTAMP DEFAULT NOW(),
+  expires_at TIMESTAMP,
+  cancelled_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS payment_transactions (
+  id SERIAL PRIMARY KEY,
+  office_id INTEGER REFERENCES offices(id) ON DELETE CASCADE,
+  subscription_id INTEGER REFERENCES subscriptions(id) ON DELETE SET NULL,
+  plan_id INTEGER REFERENCES subscription_plans(id) ON DELETE SET NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  currency VARCHAR(10) DEFAULT 'EGP',
+  payment_method VARCHAR(50) DEFAULT 'fawry',
+  fawry_ref_code VARCHAR(100),
+  status VARCHAR(20) DEFAULT 'pending',
+  description TEXT,
+  paid_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Seed default plans
+INSERT INTO subscription_plans (name, code, price_monthly, price_yearly, max_users, max_transactions, max_invoices, max_clients, max_inventory_items, features, sort_order)
+SELECT * FROM (VALUES
+  ('مجاني', 'free', 0, 0, 1, 100, 20, 20, 50, ARRAY['مستخدم واحد', '100 معاملة/شهر', '20 فاتورة/شهر', '20 عميل', '50 صنف بالمخزن', 'دعم عبر البريد الإلكتروني'], 0),
+  ('قياسي', 'standard', 299, 2990, 3, 1000, 200, 200, 500, ARRAY['3 مستخدمين', '1000 معاملة/شهر', '200 فاتورة/شهر', '200 عميل', '500 صنف بالمخزن', 'تقارير متقدمة', 'دعم عبر الواتساب'], 1),
+  ('مميز', 'premium', 599, 5990, 10, -1, -1, -1, -1, ARRAY['10 مستخدمين', 'معاملات غير محدودة', 'فواتير غير محدودة', 'عملاء غير محدودين', 'مخزن غير محدود', 'كل التقارير والتحليلات', 'دعم فوري عبر الواتساب', 'تصدير Excel متقدم'], 2),
+  ('شركات', 'enterprise', 1499, 14990, -1, -1, -1, -1, -1, ARRAY['مستخدمين غير محدودين', 'كل شيء غير محدود', 'مساعد ذكي مخصص', 'دعم فني مخصص 24/7', 'تكامل مع الأنظمة الخارجية', 'لوحة تحكم تنفيذية متقدمة', 'تطبيق جوال كامل'], 3)
+) AS v
+WHERE NOT EXISTS (SELECT 1 FROM subscription_plans);
+
+-- Auto-create free subscription for existing offices without one
+INSERT INTO subscriptions (office_id, plan_id, status, started_at)
+SELECT o.id, sp.id, 'active', NOW()
+FROM offices o
+CROSS JOIN subscription_plans sp
+WHERE sp.code = 'free'
+  AND NOT EXISTS (SELECT 1 FROM subscriptions s WHERE s.office_id = o.id);
     `);
 
     console.log('✅ All tables created successfully!');

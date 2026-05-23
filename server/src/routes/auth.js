@@ -26,6 +26,14 @@ router.post('/register', async (req, res) => {
 
     const office = result.rows[0];
 
+    // Auto-create free subscription
+    await pool.query(
+      `INSERT INTO subscriptions (office_id, plan_id)
+       SELECT $1, id FROM subscription_plans WHERE code = 'free'
+       WHERE NOT EXISTS (SELECT 1 FROM subscriptions WHERE office_id = $1)`,
+      [office.id]
+    );
+
     // Generate token
     const token = jwt.sign(
       { officeId: office.id, email: office.email },

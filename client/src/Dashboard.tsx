@@ -17,6 +17,7 @@ import Reports from "./pages/Reports";
 import BankSync from "./pages/BankSync";
 import AIAssistant from "./components/AIAssistant";
 import ExecutiveDashboard from "./pages/ExecutiveDashboard";
+import Subscription from "./pages/Subscription";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend
@@ -172,6 +173,7 @@ const Dashboard = () => {
     { id: "salaries", label: "الرواتب", icon: "👨‍💼" },
     { id: "debts", label: "الديون", icon: "💳" },
     { id: "bank", label: "البنوك", icon: "🏦" },
+    { id: "subscription", label: "الاشتراك", icon: "💳" },
   ].filter((item) => item.id !== "users" || canManageUsers);
 
   const isDashboard = activePage === "dashboard";
@@ -248,6 +250,7 @@ const Dashboard = () => {
               {activePage === "debts" && "الديون"}
               {activePage === "bank" && "البنوك"}
               {activePage === "executive" && "لوحة القيادة التنفيذية"}
+              {activePage === "subscription" && "الاشتراك والفواتير"}
             </h2>
           </div>
           <div className="flex items-center gap-4">
@@ -575,8 +578,9 @@ const Dashboard = () => {
         {activePage === "reports" && <Reports />}
         {activePage === "bank" && <BankSync />}
         {activePage === "executive" && <ExecutiveDashboard />}
+        {activePage === "subscription" && <Subscription />}
 
-        {!["dashboard","income","clients","invoices","import","treasury","users","inventory","suppliers","salaries","debts","reports","bank","executive"].includes(activePage) && (
+        {!["dashboard","income","clients","invoices","import","treasury","users","inventory","suppliers","salaries","debts","reports","bank","executive","subscription"].includes(activePage) && (
           <div className="flex items-center justify-center h-full" style={{ color: "var(--color-text-muted)" }}>
             <div className="text-center">
               <p className="text-4xl mb-3">🚧</p>

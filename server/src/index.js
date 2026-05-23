@@ -22,6 +22,7 @@ const bankRoutes = require('./routes/bank');
 const supplierDebtsRoutes = require('./routes/supplier-debts');
 const employeeLoansRoutes = require('./routes/employee-loans');
 const executiveDashboardRoutes = require('./routes/executive-dashboard');
+const subscriptionRoutes = require('./routes/subscriptions');
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/bank', bankRoutes);
 app.use('/api/supplier-debts', supplierDebtsRoutes);
 app.use('/api/employee-loans', employeeLoansRoutes);
 app.use('/api/executive-dashboard', executiveDashboardRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
 
 // Serve built client static files (after API routes so /api/* takes priority)
 const clientDist = path.join(__dirname, '..', 'public');
