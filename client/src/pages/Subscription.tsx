@@ -82,6 +82,7 @@ const Subscription = () => {
   const [upgrading, setUpgrading] = useState(false);
   const [message, setMessage] = useState("");
   const [pendingFawry, setPendingFawry] = useState<FawryData | null>(null);
+  const [polling, setPolling] = useState(false);
 
   useEffect(() => {
     const fetch = async () => {
@@ -106,6 +107,27 @@ const Subscription = () => {
     };
     fetch();
   }, []);
+
+  // Poll for subscription activation when payment is pending
+  useEffect(() => {
+    if (!subscription || subscription.status !== 'pending') return;
+    setPolling(true);
+    const interval = setInterval(async () => {
+      try {
+        const res = await axios.get(`${API}/api/subscriptions`, { headers });
+        if (res.data.status === 'active') {
+          setSubscription(res.data);
+          setPendingFawry(null);
+          setMessage("✅ تم تفعيل الاشتراك بنجاح!");
+          setPolling(false);
+          clearInterval(interval);
+          const payRes = await axios.get(`${API}/api/subscriptions/payments`, { headers });
+          setPayments(payRes.data);
+        }
+      } catch { /* ignore */ }
+    }, 5000);
+    return () => { clearInterval(interval); setPolling(false); };
+  }, [subscription?.status, subscription?.id]);
 
   const handleUpgrade = async (planId: number) => {
     setUpgrading(true);
@@ -273,8 +295,14 @@ const Subscription = () => {
                 <li>ادفع المبلغ المطلوب ({pendingFawry.amount.toLocaleString()} ج.م)</li>
                 <li>سيتم تفعيل اشتراكك تلقائياً بعد تأكيد الدفع</li>
               </ol>
-              <p className="mt-2">⏳ يستغرق التأكيد بضع دقائق. يمكنك متابعة حالة الاشتراك من هذه الصفحة.</p>
+              <p className="mt-2">⏳ يستغرق التأكيد بضع دقائق. يتم التحقق تلقائياً كل 5 ثوانٍ.</p>
             </div>
+            {polling && (
+              <div className="flex items-center gap-2 text-sm" style={{ color: "var(--color-text-muted)" }}>
+                <span className="inline-block w-3 h-3 rounded-full animate-pulse" style={{ background: "var(--color-warning)" }}></span>
+                في انتظار تأكيد الدفع...
+              </div>
+            )}
           </div>
         </div>
       )}
